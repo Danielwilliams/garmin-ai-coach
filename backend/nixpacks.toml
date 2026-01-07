@@ -1,0 +1,8 @@
+[phases.build]
+dependsOn = ["install"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "python start.py"
