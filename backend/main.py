@@ -36,12 +36,7 @@ async def root():
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "healthy",
-        "version": "1.0.0",
-        "environment": os.getenv("ENVIRONMENT", "production"),
-        "port": os.getenv("PORT", "8000")
-    }
+    return {"status": "ok"}
 
 # Test endpoint
 @app.get("/test")
