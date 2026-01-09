@@ -1,11 +1,14 @@
 """Authentication and security utilities."""
 
 import os
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
+
+logger = logging.getLogger(__name__)
 
 # Security settings
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
@@ -17,7 +20,9 @@ pwd_context = CryptContext(
     schemes=["bcrypt"], 
     deprecated="auto",
     bcrypt__rounds=12,
-    bcrypt__ident="2b"
+    bcrypt__ident="2b",
+    # Handle bcrypt backend selection more robustly
+    bcrypt__default_rounds=12
 )
 
 # Token-related exceptions
@@ -31,35 +36,49 @@ credentials_exception = HTTPException(
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     # Truncate password to 72 bytes for bcrypt compatibility
-    if len(plain_password.encode('utf-8')) > 72:
+    password_bytes = plain_password.encode('utf-8')
+    if len(password_bytes) > 72:
         # Safely truncate at byte boundary to avoid malformed UTF-8
-        password_bytes = plain_password.encode('utf-8')[:72]
+        password_bytes = password_bytes[:72]
         while len(password_bytes) > 0:
             try:
                 plain_password = password_bytes.decode('utf-8')
                 break
             except UnicodeDecodeError:
                 password_bytes = password_bytes[:-1]
-        else:
-            plain_password = "truncated"  # Fallback if all bytes fail
+        if len(password_bytes) == 0:
+            # Fallback: use first 72 characters instead of bytes
+            plain_password = plain_password[:72]
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
-    # Truncate password to 72 bytes for bcrypt compatibility
-    if len(password.encode('utf-8')) > 72:
-        # Safely truncate at byte boundary to avoid malformed UTF-8
-        password_bytes = password.encode('utf-8')[:72]
-        while len(password_bytes) > 0:
-            try:
-                password = password_bytes.decode('utf-8')
-                break
-            except UnicodeDecodeError:
-                password_bytes = password_bytes[:-1]
-        else:
-            password = "truncated"  # Fallback if all bytes fail
-    return pwd_context.hash(password)
+    try:
+        # Truncate password to 72 bytes for bcrypt compatibility
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            logger.warning(f"Password truncated from {len(password_bytes)} bytes to 72 bytes")
+            # Safely truncate at byte boundary to avoid malformed UTF-8
+            password_bytes = password_bytes[:72]
+            while len(password_bytes) > 0:
+                try:
+                    password = password_bytes.decode('utf-8')
+                    break
+                except UnicodeDecodeError:
+                    password_bytes = password_bytes[:-1]
+            if len(password_bytes) == 0:
+                # Fallback: use first 72 characters instead of bytes
+                password = password[:72]
+                logger.warning("Used character-based truncation fallback")
+        
+        return pwd_context.hash(password)
+    except Exception as e:
+        logger.error(f"Password hashing error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password processing failed"
+        )
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
