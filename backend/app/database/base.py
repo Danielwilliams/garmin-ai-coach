@@ -10,7 +10,8 @@ import uuid
 from typing import AsyncGenerator
 
 # Get database URL from Railway environment and convert for asyncpg
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://localhost/garmin_ai_coach")
+# Railway provides DATABASE_PUBLIC_URL, but we also check for DATABASE_URL
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL", "postgresql+asyncpg://localhost/garmin_ai_coach")
 print(f"🔌 Original DATABASE_URL: {DATABASE_URL[:50]}...")
 
 if DATABASE_URL.startswith("postgresql://"):
