@@ -70,11 +70,25 @@ Located in `/backend/app/`:
 - Environment variables managed by hosting platforms
 - Health endpoint connectivity confirmed
 
-**🐛 CRITICAL BUG FIXED**: Production bcrypt password hashing failure
-- **Error**: `ValueError: password cannot be longer than 72 bytes`
-- **Root Cause**: Production bcrypt library stricter about 72-byte limit
-- **Solution**: Improved password truncation logic with better fallback handling
-- **Status**: ✅ Fixed and committed (commit: ae43d69)
+**🐛 CRITICAL BUGS FIXED**: Production deployment issues
+
+1. **Bcrypt Password Hashing Failure** ✅
+   - **Error**: `ValueError: password cannot be longer than 72 bytes`
+   - **Root Cause**: Production bcrypt library stricter about 72-byte limit
+   - **Solution**: Improved password truncation logic with better fallback handling
+   - **Status**: ✅ Fixed and committed (commit: ae43d69)
+
+2. **Database Connection Issues** ✅  
+   - **Error**: `could not receive data from client: Connection reset by peer`
+   - **Root Cause**: Railway database connection limits and timeout issues
+   - **Solution**: Optimized connection pool settings, added timeouts and reconnection logic
+   - **Status**: ✅ Fixed and committed (commit: a5857b7)
+
+3. **Startup Optimization** ✅
+   - **Issue**: Automatic table creation on startup causing complexity and potential issues
+   - **Solution**: Removed init_database() and table creation code from startup
+   - **Benefit**: Faster startup, eliminates permission issues, tables managed externally
+   - **Status**: ✅ Optimized and committed (commit: 0468bb8)
 
 ---
 
