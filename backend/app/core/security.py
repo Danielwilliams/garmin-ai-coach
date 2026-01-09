@@ -22,9 +22,7 @@ pwd_context = CryptContext(
     bcrypt__rounds=12,
     bcrypt__ident="2b",
     # Disable automatic backend detection to avoid version issues
-    bcrypt__default_rounds=12,
-    # Use a more compatible configuration
-    verify_and_update=False
+    bcrypt__default_rounds=12
 )
 
 # Token-related exceptions
