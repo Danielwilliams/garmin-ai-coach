@@ -15,14 +15,16 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Password hashing with explicit bcrypt configuration
+# Password hashing with robust bcrypt configuration for production
 pwd_context = CryptContext(
     schemes=["bcrypt"], 
     deprecated="auto",
     bcrypt__rounds=12,
     bcrypt__ident="2b",
-    # Handle bcrypt backend selection more robustly
-    bcrypt__default_rounds=12
+    # Disable automatic backend detection to avoid version issues
+    bcrypt__default_rounds=12,
+    # Use a more compatible configuration
+    verify_and_update=False
 )
 
 # Token-related exceptions
@@ -34,51 +36,49 @@ credentials_exception = HTTPException(
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    # Truncate password to 72 bytes for bcrypt compatibility
+    """Verify a password against its hash with consistent truncation."""
+    # Apply the same truncation logic as get_password_hash
+    if len(plain_password) > 70:  # Leave some buffer under 72 bytes
+        plain_password = plain_password[:70]
+    
+    # Additional safety check for byte length
     password_bytes = plain_password.encode('utf-8')
-    if len(password_bytes) > 72:
-        # Safely truncate at byte boundary to avoid malformed UTF-8
-        password_bytes = password_bytes[:72]
-        while len(password_bytes) > 0:
-            try:
-                plain_password = password_bytes.decode('utf-8')
-                break
-            except UnicodeDecodeError:
-                password_bytes = password_bytes[:-1]
-        if len(password_bytes) == 0:
-            # Fallback: use first 72 characters instead of bytes
-            plain_password = plain_password[:72]
+    if len(password_bytes) > 70:
+        # If still too long, truncate by characters more aggressively
+        plain_password = plain_password[:60]  # Even more conservative
+    
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password."""
+    """Hash a password with aggressive truncation for bcrypt compatibility."""
     try:
-        # Truncate password to 72 bytes for bcrypt compatibility
+        # Aggressively truncate to ensure compatibility
+        if len(password) > 70:  # Leave some buffer under 72 bytes
+            password = password[:70]
+            logger.warning(f"Password truncated to {len(password)} characters for bcrypt compatibility")
+        
+        # Additional safety check for byte length
         password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            logger.warning(f"Password truncated from {len(password_bytes)} bytes to 72 bytes")
-            # Safely truncate at byte boundary to avoid malformed UTF-8
-            password_bytes = password_bytes[:72]
-            while len(password_bytes) > 0:
-                try:
-                    password = password_bytes.decode('utf-8')
-                    break
-                except UnicodeDecodeError:
-                    password_bytes = password_bytes[:-1]
-            if len(password_bytes) == 0:
-                # Fallback: use first 72 characters instead of bytes
-                password = password[:72]
-                logger.warning("Used character-based truncation fallback")
+        if len(password_bytes) > 70:
+            # If still too long, truncate by characters more aggressively
+            password = password[:60]  # Even more conservative
+            logger.warning("Used aggressive character truncation for bcrypt compatibility")
         
         return pwd_context.hash(password)
     except Exception as e:
         logger.error(f"Password hashing error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Password processing failed"
-        )
+        # Try one more fallback with even shorter password
+        try:
+            short_password = password[:50]  # Very conservative truncation
+            logger.warning("Attempting fallback with 50-character password limit")
+            return pwd_context.hash(short_password)
+        except Exception as fallback_error:
+            logger.error(f"Fallback password hashing also failed: {str(fallback_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Password processing failed - password may be too complex"
+            )
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
