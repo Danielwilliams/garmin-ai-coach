@@ -102,6 +102,12 @@ Located in `/backend/app/`:
    - **Solution**: Aggressive password truncation (70/60/50 char fallbacks) + disabled auto-detection
    - **Status**: ✅ Fixed and committed (commit: 0d0b123)
 
+6. **CryptContext Invalid Parameter** ✅
+   - **Error**: `KeyError: "unknown CryptContext keyword: 'verify_and_update'"`
+   - **Root Cause**: Production passlib version doesn't support verify_and_update parameter
+   - **Solution**: Removed incompatible parameter from CryptContext configuration
+   - **Status**: ✅ Fixed and committed (commit: 1c269cf)
+
 ---
 
 ## Development Tasks Log

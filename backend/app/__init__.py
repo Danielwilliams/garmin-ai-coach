@@ -1,0 +1,1 @@
+"""Garmin AI Coach FastAPI application package."""
