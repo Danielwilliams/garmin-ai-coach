@@ -28,10 +28,10 @@ engine = create_async_engine(
     pool_recycle=3600,    # Recycle connections after 1 hour
     pool_pre_ping=True,   # Validate connections before use
     connect_args={
-        "connect_timeout": 10,     # Connection timeout in seconds
-        "command_timeout": 60,     # Command timeout in seconds
+        # asyncpg-specific connection arguments
         "server_settings": {
             "jit": "off",          # Disable JIT for better compatibility
+            "application_name": "garmin_ai_coach"
         }
     }
 )
