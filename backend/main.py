@@ -15,9 +15,13 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Starting Garmin AI Coach API...")
     
-    # Initialize database
-    await init_database()
-    print("✅ Database initialized")
+    # Initialize database (with error handling)
+    try:
+        await init_database()
+        print("✅ Database initialized")
+    except Exception as e:
+        print(f"⚠️  Database initialization failed: {e}")
+        print("📝 App will start without database - some features may not work")
     
     yield
     

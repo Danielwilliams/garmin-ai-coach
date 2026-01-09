@@ -8,8 +8,13 @@ from sqlalchemy import Column, String, DateTime, func
 import uuid
 from typing import AsyncGenerator
 
-# Get database URL from Railway environment
+# Get database URL from Railway environment and convert for asyncpg
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://localhost/garmin_ai_coach")
+print(f"🔌 Original DATABASE_URL: {DATABASE_URL[:50]}...")
+
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    print(f"🔧 Converted to asyncpg: {DATABASE_URL[:50]}...")
 
 # Create async engine
 engine = create_async_engine(
