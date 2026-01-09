@@ -15,14 +15,21 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Password hashing with robust bcrypt configuration for production
+# Password hashing with Argon2 - more reliable than bcrypt in production
 pwd_context = CryptContext(
-    schemes=["bcrypt"], 
+    schemes=["argon2", "scrypt", "pbkdf2_sha256"],  # Multiple secure schemes with fallbacks
+    default="argon2",
     deprecated="auto",
-    bcrypt__rounds=12,
-    bcrypt__ident="2b",
-    # Disable automatic backend detection to avoid version issues
-    bcrypt__default_rounds=12
+    # Argon2 configuration (secure defaults)
+    argon2__rounds=4,
+    argon2__memory_cost=65536,  # 64 MB
+    argon2__parallelism=1,
+    # Scrypt fallback configuration
+    scrypt__rounds=32768,
+    scrypt__block_size=8,
+    scrypt__parallelism=1,
+    # PBKDF2 fallback configuration
+    pbkdf2_sha256__rounds=100000
 )
 
 # Token-related exceptions
@@ -34,49 +41,24 @@ credentials_exception = HTTPException(
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash with consistent truncation."""
-    # Apply the same truncation logic as get_password_hash
-    if len(plain_password) > 70:  # Leave some buffer under 72 bytes
-        plain_password = plain_password[:70]
-    
-    # Additional safety check for byte length
-    password_bytes = plain_password.encode('utf-8')
-    if len(password_bytes) > 70:
-        # If still too long, truncate by characters more aggressively
-        plain_password = plain_password[:60]  # Even more conservative
-    
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a password against its hash."""
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Password verification error: {str(e)}")
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password with aggressive truncation for bcrypt compatibility."""
+    """Hash a password using Argon2/scrypt (no length limitations)."""
     try:
-        # Aggressively truncate to ensure compatibility
-        if len(password) > 70:  # Leave some buffer under 72 bytes
-            password = password[:70]
-            logger.warning(f"Password truncated to {len(password)} characters for bcrypt compatibility")
-        
-        # Additional safety check for byte length
-        password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 70:
-            # If still too long, truncate by characters more aggressively
-            password = password[:60]  # Even more conservative
-            logger.warning("Used aggressive character truncation for bcrypt compatibility")
-        
         return pwd_context.hash(password)
     except Exception as e:
         logger.error(f"Password hashing error: {str(e)}")
-        # Try one more fallback with even shorter password
-        try:
-            short_password = password[:50]  # Very conservative truncation
-            logger.warning("Attempting fallback with 50-character password limit")
-            return pwd_context.hash(short_password)
-        except Exception as fallback_error:
-            logger.error(f"Fallback password hashing also failed: {str(fallback_error)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Password processing failed - password may be too complex"
-            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password hashing failed"
+        )
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
