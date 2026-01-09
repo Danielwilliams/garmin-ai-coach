@@ -4,9 +4,6 @@ from sqlalchemy import Column, String, Boolean, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database.base import Base
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User(Base):
@@ -26,19 +23,6 @@ class User(Base):
     # garmin_account = relationship("GarminAccount", back_populates="user", uselist=False)
     # training_configs = relationship("TrainingConfig", back_populates="user")
     # analyses = relationship("Analysis", back_populates="user")
-    
-    def verify_password(self, password: str) -> bool:
-        """Verify password against hash."""
-        return pwd_context.verify(password, self.hashed_password)
-    
-    @classmethod
-    def hash_password(cls, password: str) -> str:
-        """Hash a password."""
-        return pwd_context.hash(password)
-    
-    def set_password(self, password: str):
-        """Set password (hashes it automatically)."""
-        self.hashed_password = self.hash_password(password)
 
 
 class GarminAccount(Base):
