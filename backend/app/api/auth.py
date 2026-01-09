@@ -115,7 +115,7 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     await db.refresh(user)
     
     return UserResponse(
-        id=user.id,
+        id=str(user.id),
         email=user.email,
         full_name=user.full_name,
         is_active=user.is_active,
@@ -196,7 +196,7 @@ async def refresh_token(token_data: TokenRefresh, db: AsyncSession = Depends(get
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information."""
     return UserResponse(
-        id=current_user.id,
+        id=str(current_user.id),
         email=current_user.email,
         full_name=current_user.full_name,
         is_active=current_user.is_active,

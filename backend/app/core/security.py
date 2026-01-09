@@ -12,8 +12,13 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing with explicit bcrypt configuration
+pwd_context = CryptContext(
+    schemes=["bcrypt"], 
+    deprecated="auto",
+    bcrypt__rounds=12,
+    bcrypt__ident="2b"
+)
 
 # Token-related exceptions
 credentials_exception = HTTPException(
@@ -27,7 +32,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     # Truncate password to 72 bytes for bcrypt compatibility
     if len(plain_password.encode('utf-8')) > 72:
-        plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        # Safely truncate at byte boundary to avoid malformed UTF-8
+        password_bytes = plain_password.encode('utf-8')[:72]
+        while len(password_bytes) > 0:
+            try:
+                plain_password = password_bytes.decode('utf-8')
+                break
+            except UnicodeDecodeError:
+                password_bytes = password_bytes[:-1]
+        else:
+            plain_password = "truncated"  # Fallback if all bytes fail
     return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -35,7 +49,16 @@ def get_password_hash(password: str) -> str:
     """Hash a password."""
     # Truncate password to 72 bytes for bcrypt compatibility
     if len(password.encode('utf-8')) > 72:
-        password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        # Safely truncate at byte boundary to avoid malformed UTF-8
+        password_bytes = password.encode('utf-8')[:72]
+        while len(password_bytes) > 0:
+            try:
+                password = password_bytes.decode('utf-8')
+                break
+            except UnicodeDecodeError:
+                password_bytes = password_bytes[:-1]
+        else:
+            password = "truncated"  # Fallback if all bytes fail
     return pwd_context.hash(password)
 
 
