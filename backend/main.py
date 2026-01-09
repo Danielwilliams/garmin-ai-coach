@@ -1,35 +1,61 @@
 """FastAPI application entry point."""
 
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.database.base import init_database
+from app.api.auth import router as auth_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events."""
+    # Startup
+    print("🚀 Starting Garmin AI Coach API...")
+    
+    # Initialize database
+    await init_database()
+    print("✅ Database initialized")
+    
+    yield
+    
+    # Shutdown
+    print("👋 Shutting down...")
+
 
 # Create FastAPI app
 app = FastAPI(
     title="Garmin AI Coach API",
     description="AI-powered triathlon coaching platform with Garmin Connect integration",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # TODO: Restrict in production
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(auth_router, prefix="/api/v1")
 
 # Root endpoint
 @app.get("/")
 async def root():
     return {
         "message": "Garmin AI Coach API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "environment": os.getenv("ENVIRONMENT", "production"),
         "status": "running",
+        "features": ["authentication", "multi-tenant", "database"],
         "docs": "/docs"
     }
 
@@ -41,4 +67,4 @@ async def health_check():
 # Test endpoint
 @app.get("/test")
 async def test():
-    return {"message": "Backend is working correctly!", "success": True}
+    return {"message": "Phase 2: Multi-tenancy ready!", "success": True}
