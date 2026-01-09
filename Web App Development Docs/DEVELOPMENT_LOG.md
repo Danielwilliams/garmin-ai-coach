@@ -96,6 +96,12 @@ Located in `/backend/app/`:
    - **Solution**: Removed incompatible timeout arguments, kept asyncpg-compatible settings
    - **Status**: ✅ Fixed and committed (commit: 68a87ba)
 
+5. **BCrypt Production Compatibility** ✅
+   - **Error**: `password cannot be longer than 72 bytes` + `module 'bcrypt' has no attribute '__about__'`
+   - **Root Cause**: bcrypt version detection issues and persistent 72-byte limit in production
+   - **Solution**: Aggressive password truncation (70/60/50 char fallbacks) + disabled auto-detection
+   - **Status**: ✅ Fixed and committed (commit: 0d0b123)
+
 ---
 
 ## Development Tasks Log
