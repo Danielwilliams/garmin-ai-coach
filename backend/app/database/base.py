@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import Column, String, DateTime, func
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from typing import AsyncGenerator
 
@@ -39,7 +40,7 @@ class Base(DeclarativeBase):
     def __tablename__(cls) -> str:
         return cls.__name__.lower()
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -55,5 +56,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_database():
     """Initialize database tables."""
+    # Import all models to register them with Base.metadata
+    from app.database.models import user, training_config, analysis
+    
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        print("🗄️ Database tables created successfully")

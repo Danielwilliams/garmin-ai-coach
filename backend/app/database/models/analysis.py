@@ -1,6 +1,7 @@
 """Analysis and AI coaching result models."""
 
 from sqlalchemy import Column, String, Text, JSON, DateTime, Boolean, Integer
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database.base import Base
 
@@ -8,8 +9,8 @@ from app.database.base import Base
 class Analysis(Base):
     """AI coaching analysis session."""
     
-    user_id = Column(String(36), nullable=False, index=True)  # Foreign key to User
-    training_config_id = Column(String(36), nullable=False, index=True)  # Foreign key
+    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key to User
+    training_config_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key
     
     # Analysis metadata
     status = Column(String(20), default="pending", nullable=False)  # pending, running, completed, failed
@@ -47,7 +48,7 @@ class Analysis(Base):
 class AnalysisResult(Base):
     """Individual result components from analysis."""
     
-    analysis_id = Column(String(36), nullable=False, index=True)  # Foreign key
+    analysis_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key
     
     # Result metadata
     node_name = Column(String(100), nullable=False)  # Which LangGraph node generated this
@@ -70,7 +71,7 @@ class AnalysisResult(Base):
 class AnalysisFile(Base):
     """Files generated during analysis (plots, reports, etc.)."""
     
-    analysis_id = Column(String(36), nullable=False, index=True)  # Foreign key
+    analysis_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key
     
     # File metadata
     filename = Column(String(255), nullable=False)

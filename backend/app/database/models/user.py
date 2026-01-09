@@ -1,6 +1,7 @@
 """User and authentication models."""
 
 from sqlalchemy import Column, String, Boolean, DateTime, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database.base import Base
 from passlib.context import CryptContext
@@ -43,7 +44,7 @@ class User(Base):
 class GarminAccount(Base):
     """Garmin Connect account integration."""
     
-    user_id = Column(String(36), nullable=False, index=True)  # Foreign key to User
+    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key to User
     email = Column(String(254), nullable=False)  # Garmin Connect email
     encrypted_password = Column(String(512), nullable=True)  # Encrypted Garmin password (optional)
     

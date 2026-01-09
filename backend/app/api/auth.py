@@ -68,8 +68,14 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
     
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
+    try:
+        # Convert string UUID back to UUID object
+        import uuid as uuid_lib
+        user_uuid = uuid_lib.UUID(user_id)
+        result = await db.execute(select(User).where(User.id == user_uuid))
+        user = result.scalar_one_or_none()
+    except (ValueError, TypeError):
+        raise credentials_exception
     
     if user is None:
         raise credentials_exception
@@ -142,9 +148,9 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
     # Create tokens
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.id}, expires_delta=access_token_expires
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
-    refresh_token = create_refresh_token(user.id)
+    refresh_token = create_refresh_token(str(user.id))
     
     return Token(
         access_token=access_token,
@@ -176,9 +182,9 @@ async def refresh_token(token_data: TokenRefresh, db: AsyncSession = Depends(get
     # Create new tokens
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.id}, expires_delta=access_token_expires
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
-    new_refresh_token = create_refresh_token(user.id)
+    new_refresh_token = create_refresh_token(str(user.id))
     
     return Token(
         access_token=access_token,

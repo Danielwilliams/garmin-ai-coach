@@ -1,6 +1,7 @@
 """Training configuration models (web version of YAML config)."""
 
 from sqlalchemy import Column, String, Boolean, Integer, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database.base import Base
 
@@ -8,7 +9,7 @@ from app.database.base import Base
 class TrainingConfig(Base):
     """User's training configuration (replaces YAML config)."""
     
-    user_id = Column(String(36), nullable=False, index=True)  # Foreign key to User
+    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key to User
     name = Column(String(100), nullable=False)  # Config name (e.g., "Spring Training 2024")
     is_active = Column(Boolean, default=True, nullable=False)
     
@@ -35,7 +36,7 @@ class TrainingConfig(Base):
 class Competition(Base):
     """Competition/race information."""
     
-    training_config_id = Column(String(36), nullable=False, index=True)  # Foreign key
+    training_config_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key
     
     name = Column(String(200), nullable=False)
     date = Column(String(20), nullable=False)  # YYYY-MM-DD or text format
