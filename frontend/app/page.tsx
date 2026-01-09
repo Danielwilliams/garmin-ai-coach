@@ -1,14 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function Home() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const router = useRouter()
   const [apiStatus, setApiStatus] = useState<{
     status: string
     data: any
   }>({ status: 'loading', data: null })
 
   useEffect(() => {
+    // If user is already authenticated, redirect to dashboard
+    if (!isLoading && isAuthenticated) {
+      router.push('/dashboard')
+      return
+    }
+
     const checkAPI = async () => {
       try {
         const response = await fetch(
@@ -23,7 +34,16 @@ export default function Home() {
     }
 
     checkAPI()
-  }, [])
+  }, [isAuthenticated, isLoading, router])
+
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -101,19 +121,43 @@ export default function Home() {
         </div>
 
         <div className="mt-12 text-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">
+              Get Started with Garmin AI Coach
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Ready to optimize your triathlon training with AI-powered insights?
+            </p>
+            <div className="flex justify-center space-x-4">
+              <Link 
+                href="/auth/register"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Create Account
+              </Link>
+              <Link 
+                href="/auth/login"
+                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-semibold mb-2 text-gray-800">
               Development Status
             </h3>
             <p className="text-gray-600 mb-4">
-              Phase 1: Foundation & API Layer - ✅ Backend Deployed
+              Phase 1: Authentication & User Management - ✅ Complete<br />
+              Phase 2: Training Profile Forms - 🔄 Coming Next
             </p>
             <div className="flex justify-center space-x-4">
               <a 
                 href={`${process.env.NEXT_PUBLIC_API_URL || 'https://garmin-ai-coach-production.up.railway.app'}/docs`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
               >
                 View API Docs
               </a>
