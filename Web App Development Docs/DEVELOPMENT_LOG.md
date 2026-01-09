@@ -138,8 +138,11 @@ Located in `/backend/app/`:
   - [ ] API client with token management  
   - [ ] Protected routes and middleware
   - [ ] User profile components
-- [ ] Test live authentication endpoints on deployed backend
-- [ ] Verify database connectivity on Railway deployment
+- [x] **COMPLETED**: Test live authentication endpoints on deployed backend ✅
+  - [x] User registration working - User created successfully
+  - [x] User login working - JWT tokens generated properly
+  - [x] Token refresh working - New tokens generated successfully
+  - [x] User profile endpoint (/auth/me) working - Protected route with Bearer token auth
 
 ---
 
