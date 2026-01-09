@@ -75,27 +75,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def init_database():
-    """Initialize database tables."""
-    try:
-        # Import all models to register them with Base.metadata
-        from app.database.models import user, training_config, analysis
-        
-        # Test basic connection first
-        async with engine.begin() as conn:
-            # Test the connection
-            result = await conn.execute(text("SELECT version()"))
-            version = result.fetchone()
-            print(f"🗄️ Connected to PostgreSQL: {version[0] if version else 'Unknown'}")
-            
-            # Create all tables
-            await conn.run_sync(Base.metadata.create_all)
-            print("🗄️ Database tables created successfully")
-            
-    except Exception as e:
-        print(f"🚨 Database initialization failed: {str(e)}")
-        print("📝 App will continue but database features may not work")
-        # Don't raise the error - let the app start even if DB is down
-        return False
-    
-    return True
+# Database table creation removed - tables are managed externally
+# Tables should be created via migrations or manual SQL scripts

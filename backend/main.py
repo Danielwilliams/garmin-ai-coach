@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database.base import init_database
+# Database initialization removed - tables managed externally
 from app.api.auth import router as auth_router
 
 
@@ -14,14 +14,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     print("🚀 Starting Garmin AI Coach API...")
-    
-    # Initialize database (with error handling)
-    try:
-        await init_database()
-        print("✅ Database initialized")
-    except Exception as e:
-        print(f"⚠️  Database initialization failed: {e}")
-        print("📝 App will start without database - some features may not work")
+    print("✅ Database tables assumed to exist (managed externally)")
     
     yield
     
