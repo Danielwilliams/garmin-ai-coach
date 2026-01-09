@@ -90,6 +90,12 @@ Located in `/backend/app/`:
    - **Benefit**: Faster startup, eliminates permission issues, tables managed externally
    - **Status**: ✅ Optimized and committed (commit: 0468bb8)
 
+4. **AsyncPG Connection Arguments** ✅
+   - **Error**: `TypeError: connect() got an unexpected keyword argument 'connect_timeout'`
+   - **Root Cause**: asyncpg driver doesn't accept psycopg2-style connection parameters
+   - **Solution**: Removed incompatible timeout arguments, kept asyncpg-compatible settings
+   - **Status**: ✅ Fixed and committed (commit: 68a87ba)
+
 ---
 
 ## Development Tasks Log
