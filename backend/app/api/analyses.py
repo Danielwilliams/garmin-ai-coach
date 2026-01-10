@@ -23,10 +23,18 @@ from app.schemas.analysis import (
     AnalysisFileResponse
 )
 from app.dependencies import get_current_user
-from app.services.report_generator import report_generator
 import os
 from pathlib import Path
 from fastapi.responses import FileResponse
+
+# Import report generator with error handling for missing dependencies
+try:
+    from app.services.report_generator import report_generator
+    REPORT_GENERATOR_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Report generator not available - {e}")
+    REPORT_GENERATOR_AVAILABLE = False
+    report_generator = None
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -493,6 +501,12 @@ async def generate_analysis_report(
 ):
     """Generate an HTML report for the analysis."""
     
+    if not REPORT_GENERATOR_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Report generation service is not available. Please contact support."
+        )
+    
     # Get the analysis
     analysis_query = select(Analysis).where(
         and_(
@@ -598,6 +612,12 @@ async def export_analysis_data(
 ):
     """Export analysis data in JSON or CSV format."""
     
+    if not REPORT_GENERATOR_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Export service is not available. Please contact support."
+        )
+    
     if export_format not in ["json", "csv"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -698,6 +718,12 @@ async def export_weekly_plan(
     db: AsyncSession = Depends(get_db)
 ):
     """Export weekly training plan as CSV."""
+    
+    if not REPORT_GENERATOR_AVAILABLE:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Export service is not available. Please contact support."
+        )
     
     # Get the analysis
     analysis_query = select(Analysis.weekly_plan, Analysis.id).where(
