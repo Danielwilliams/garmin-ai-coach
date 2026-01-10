@@ -11,15 +11,40 @@ const CreateProfilePage: React.FC = () => {
 
   const handleSubmit = async (data: CompleteTrainingProfileFormData) => {
     try {
+      // Debug: Check if we have authentication
+      const token = document.cookie.split(';')
+        .find(row => row.trim().startsWith('access_token='))
+        ?.split('=')[1];
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      console.log('Submitting training profile data:', data);
+      console.log('Using token:', token ? 'Token present' : 'No token');
+      
       const response = await api.post('/training-profiles/from-wizard', data);
       console.log('Training profile created:', response.data);
       
       // Redirect to dashboard with success message
       router.push('/dashboard?created=true');
     } catch (error: any) {
-      console.error('Error creating training profile:', error);
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response);
       
-      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create training profile';
+      let errorMessage = 'Failed to create training profile';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication expired. Please log in again.';
+        // Redirect to login
+        router.push('/auth/login');
+        return;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       alert(`Error creating profile: ${errorMessage}`);
     }
   };

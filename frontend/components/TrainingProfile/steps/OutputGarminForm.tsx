@@ -39,19 +39,23 @@ const OutputGarminForm: React.FC<OutputGarminFormProps> = ({ control, errors }) 
           <h3 className="text-lg font-medium text-gray-900">Output Settings</h3>
         </div>
 
-        <Controller
-          name="output_directory"
-          control={control}
-          render={({ field }) => (
-            <Input
-              {...field}
-              label="Output Directory"
-              placeholder="./data"
-              error={errors.output_directory?.message}
-              helperText="Directory where analysis results and training plans will be saved"
-            />
-          )}
-        />
+        <div className="bg-gray-50 rounded-lg p-4 border">
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Output Directory</h4>
+          <p className="text-sm text-gray-600 mb-3">
+            Analysis results will be saved to: <code className="bg-gray-200 px-1 rounded">./data/{'{'}profile-name{'}'}</code>
+          </p>
+          <Controller
+            name="output_directory"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="hidden"
+                value="./data"
+              />
+            )}
+          />
+        </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex">
