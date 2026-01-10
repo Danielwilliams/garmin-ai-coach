@@ -110,8 +110,15 @@ async def get_mock_analysis_detail(
     
     base_time = datetime.utcnow() - timedelta(days=2)
     
+    # Handle special cases for non-UUID analysis IDs
+    try:
+        analysis_uuid = uuid.UUID(analysis_id)
+    except ValueError:
+        # For invalid UUIDs like "new", generate a random one
+        analysis_uuid = uuid.uuid4()
+    
     mock_analysis = AnalysisWithResults(
-        id=uuid.UUID(analysis_id) if analysis_id != "test" else uuid.uuid4(),
+        id=analysis_uuid,
         user_id=current_user.id,
         training_config_id=uuid.uuid4(),
         status="completed",

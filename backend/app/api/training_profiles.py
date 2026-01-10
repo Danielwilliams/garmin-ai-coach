@@ -27,6 +27,31 @@ from app.dependencies import get_current_user
 router = APIRouter(prefix="/training-profiles", tags=["training-profiles"])
 
 
+@router.get("/debug/count")
+async def debug_profile_count(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Debug endpoint to check profile count."""
+    try:
+        query = select(func.count(TrainingConfig.id)).where(
+            TrainingConfig.user_id == current_user.id
+        )
+        result = await db.execute(query)
+        count = result.scalar()
+        
+        return {
+            "user_id": str(current_user.id),
+            "profile_count": count,
+            "status": "ok"
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "error"
+        }
+
+
 @router.get("/", response_model=List[TrainingProfileSummary])
 async def list_training_profiles(
     current_user: User = Depends(get_current_user),
@@ -34,37 +59,47 @@ async def list_training_profiles(
 ):
     """Get list of user's training profiles with summary info."""
     
-    # Query training configs with counts
-    query = select(
-        TrainingConfig,
-        func.count(Competition.id).label('competitions_count'),
-        func.count(TrainingZone.id).label('zones_count')
-    ).outerjoin(
-        Competition, Competition.training_config_id == TrainingConfig.id
-    ).outerjoin(
-        TrainingZone, TrainingZone.training_config_id == TrainingConfig.id
-    ).where(
-        TrainingConfig.user_id == current_user.id
-    ).group_by(TrainingConfig.id).order_by(
-        TrainingConfig.updated_at.desc()
-    )
-    
-    result = await db.execute(query)
-    profiles = result.all()
-    
-    return [
-        TrainingProfileSummary(
-            id=profile.TrainingConfig.id,
-            name=profile.TrainingConfig.name,
-            is_active=profile.TrainingConfig.is_active,
-            competitions_count=profile.competitions_count,
-            zones_count=profile.zones_count,
-            ai_mode=profile.TrainingConfig.ai_mode,
-            created_at=profile.TrainingConfig.created_at,
-            updated_at=profile.TrainingConfig.updated_at
+    try:
+        # Query training configs with counts
+        query = select(
+            TrainingConfig,
+            func.count(Competition.id).label('competitions_count'),
+            func.count(TrainingZone.id).label('zones_count')
+        ).outerjoin(
+            Competition, Competition.training_config_id == TrainingConfig.id
+        ).outerjoin(
+            TrainingZone, TrainingZone.training_config_id == TrainingConfig.id
+        ).where(
+            TrainingConfig.user_id == current_user.id
+        ).group_by(TrainingConfig.id).order_by(
+            TrainingConfig.updated_at.desc()
         )
-        for profile in profiles
-    ]
+        
+        result = await db.execute(query)
+        profiles = result.all()
+        
+        return [
+            TrainingProfileSummary(
+                id=profile.TrainingConfig.id,
+                name=profile.TrainingConfig.name,
+                is_active=profile.TrainingConfig.is_active,
+                competitions_count=profile.competitions_count or 0,
+                zones_count=profile.zones_count or 0,
+                ai_mode=profile.TrainingConfig.ai_mode,
+                created_at=profile.TrainingConfig.created_at,
+                updated_at=profile.TrainingConfig.updated_at
+            )
+            for profile in profiles
+        ]
+        
+    except Exception as e:
+        print(f"🚨 Error in list_training_profiles: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch training profiles: {str(e)}"
+        )
 
 
 @router.get("/{profile_id}", response_model=TrainingConfigResponse)
