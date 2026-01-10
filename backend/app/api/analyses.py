@@ -23,6 +23,10 @@ from app.schemas.analysis import (
     AnalysisFileResponse
 )
 from app.dependencies import get_current_user
+from app.services.report_generator import report_generator
+import os
+from pathlib import Path
+from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -478,4 +482,335 @@ async def get_analysis_stats(
         total_tokens_used=stats.total_tokens_used or 0,
         total_cost_usd=total_cost_usd,
         avg_processing_time_minutes=stats.avg_processing_time_minutes or 0.0
+    )
+
+
+@router.post("/{analysis_id}/generate-report")
+async def generate_analysis_report(
+    analysis_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Generate an HTML report for the analysis."""
+    
+    # Get the analysis
+    analysis_query = select(Analysis).where(
+        and_(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id
+        )
+    )
+    analysis_result = await db.execute(analysis_query)
+    analysis = analysis_result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    # Get training config name
+    config_query = select(TrainingConfig.name).where(
+        TrainingConfig.id == analysis.training_config_id
+    )
+    config_result = await db.execute(config_query)
+    training_config_name = config_result.scalar_one_or_none()
+    
+    # Get analysis results
+    results_query = select(AnalysisResult).where(
+        AnalysisResult.analysis_id == analysis_id
+    ).order_by(AnalysisResult.created_at)
+    results_result = await db.execute(results_query)
+    results = results_result.scalars().all()
+    
+    # Convert to dict format for report generator
+    analysis_data = {
+        "id": str(analysis.id),
+        "analysis_type": analysis.analysis_type,
+        "status": analysis.status,
+        "progress_percentage": analysis.progress_percentage,
+        "summary": analysis.summary,
+        "recommendations": analysis.recommendations,
+        "weekly_plan": analysis.weekly_plan,
+        "total_tokens": analysis.total_tokens,
+        "estimated_cost": analysis.estimated_cost,
+        "created_at": analysis.created_at,
+        "training_config_name": training_config_name
+    }
+    
+    results_data = [
+        {
+            "node_name": result.node_name,
+            "result_type": result.result_type,
+            "title": result.title,
+            "content": result.content,
+            "data": result.data,
+            "tokens_used": result.tokens_used,
+            "processing_time": result.processing_time
+        }
+        for result in results
+    ]
+    
+    # Generate report
+    try:
+        report_info = report_generator.generate_analysis_report(
+            analysis_data=analysis_data,
+            results_data=results_data,
+            user_name=current_user.full_name or current_user.email
+        )
+        
+        # Save file reference to database
+        analysis_file = AnalysisFile(
+            analysis_id=analysis_id,
+            filename=report_info["filename"],
+            file_type="report",
+            mime_type=report_info["mime_type"],
+            file_size=report_info["file_size"],
+            file_path=report_info["file_path"],
+            is_public=False,
+            download_count=0
+        )
+        
+        db.add(analysis_file)
+        await db.commit()
+        await db.refresh(analysis_file)
+        
+        return {
+            "status": "success",
+            "message": "Report generated successfully",
+            "report": report_info,
+            "download_url": f"/api/v1/analyses/files/{report_info['filename']}"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate report: {str(e)}"
+        )
+
+
+@router.post("/{analysis_id}/export-data")
+async def export_analysis_data(
+    analysis_id: UUID,
+    export_format: str = "json",
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Export analysis data in JSON or CSV format."""
+    
+    if export_format not in ["json", "csv"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Export format must be 'json' or 'csv'"
+        )
+    
+    # Get the analysis
+    analysis_query = select(Analysis).where(
+        and_(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id
+        )
+    )
+    analysis_result = await db.execute(analysis_query)
+    analysis = analysis_result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    # Get analysis results
+    results_query = select(AnalysisResult).where(
+        AnalysisResult.analysis_id == analysis_id
+    ).order_by(AnalysisResult.created_at)
+    results_result = await db.execute(results_query)
+    results = results_result.scalars().all()
+    
+    # Convert to dict format for report generator
+    analysis_data = {
+        "id": str(analysis.id),
+        "analysis_type": analysis.analysis_type,
+        "status": analysis.status,
+        "created_at": analysis.created_at,
+        "total_tokens": analysis.total_tokens,
+        "estimated_cost": analysis.estimated_cost,
+        "summary": analysis.summary,
+        "recommendations": analysis.recommendations,
+        "weekly_plan": analysis.weekly_plan,
+        "data_summary": analysis.data_summary
+    }
+    
+    results_data = [
+        {
+            "node_name": result.node_name,
+            "result_type": result.result_type,
+            "title": result.title,
+            "content": result.content,
+            "data": result.data,
+            "tokens_used": result.tokens_used
+        }
+        for result in results
+    ]
+    
+    # Generate export
+    try:
+        export_info = report_generator.generate_data_export(
+            analysis_data=analysis_data,
+            results_data=results_data,
+            export_format=export_format
+        )
+        
+        # Save file reference to database
+        analysis_file = AnalysisFile(
+            analysis_id=analysis_id,
+            filename=export_info["filename"],
+            file_type="export",
+            mime_type=export_info["mime_type"],
+            file_size=export_info["file_size"],
+            file_path=export_info["file_path"],
+            is_public=False,
+            download_count=0
+        )
+        
+        db.add(analysis_file)
+        await db.commit()
+        await db.refresh(analysis_file)
+        
+        return {
+            "status": "success",
+            "message": f"Data exported successfully as {export_format.upper()}",
+            "export": export_info,
+            "download_url": f"/api/v1/analyses/files/{export_info['filename']}"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export data: {str(e)}"
+        )
+
+
+@router.post("/{analysis_id}/export-weekly-plan")
+async def export_weekly_plan(
+    analysis_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Export weekly training plan as CSV."""
+    
+    # Get the analysis
+    analysis_query = select(Analysis.weekly_plan, Analysis.id).where(
+        and_(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id
+        )
+    )
+    analysis_result = await db.execute(analysis_query)
+    analysis_data = analysis_result.first()
+    
+    if not analysis_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    if not analysis_data.weekly_plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No weekly plan available for this analysis"
+        )
+    
+    # Get full analysis for metadata
+    full_analysis_query = select(Analysis).where(Analysis.id == analysis_id)
+    full_analysis_result = await db.execute(full_analysis_query)
+    full_analysis = full_analysis_result.scalar_one()
+    
+    # Generate export
+    try:
+        export_info = report_generator.generate_weekly_plan_export(
+            weekly_plan_data=analysis_data.weekly_plan,
+            analysis_data={
+                "id": str(full_analysis.id),
+                "analysis_type": full_analysis.analysis_type,
+                "created_at": full_analysis.created_at
+            }
+        )
+        
+        # Save file reference to database
+        analysis_file = AnalysisFile(
+            analysis_id=analysis_id,
+            filename=export_info["filename"],
+            file_type="weekly_plan",
+            mime_type=export_info["mime_type"],
+            file_size=export_info["file_size"],
+            file_path=export_info["file_path"],
+            is_public=False,
+            download_count=0
+        )
+        
+        db.add(analysis_file)
+        await db.commit()
+        await db.refresh(analysis_file)
+        
+        return {
+            "status": "success",
+            "message": "Weekly plan exported successfully",
+            "export": export_info,
+            "download_url": f"/api/v1/analyses/files/{export_info['filename']}"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export weekly plan: {str(e)}"
+        )
+
+
+@router.get("/files/{file_path:path}")
+async def serve_file(file_path: str):
+    """Serve generated files for download."""
+    
+    # Security: Only allow files from our designated directories
+    allowed_dirs = [
+        Path(os.getenv("REPORTS_OUTPUT_DIR", "./storage/reports")),
+        Path(os.getenv("EXPORTS_OUTPUT_DIR", "./storage/exports")),
+        Path(os.getenv("PLOTS_OUTPUT_DIR", "./storage/plots"))
+    ]
+    
+    # Resolve the full path
+    full_path = None
+    for allowed_dir in allowed_dirs:
+        potential_path = allowed_dir / file_path
+        if potential_path.exists() and potential_path.is_file():
+            # Additional security check: ensure the file is within the allowed directory
+            try:
+                potential_path.resolve().relative_to(allowed_dir.resolve())
+                full_path = potential_path
+                break
+            except ValueError:
+                # Path is outside the allowed directory
+                continue
+    
+    if not full_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found"
+        )
+    
+    # Determine media type
+    media_type = "application/octet-stream"
+    if full_path.suffix == ".html":
+        media_type = "text/html"
+    elif full_path.suffix == ".json":
+        media_type = "application/json"
+    elif full_path.suffix == ".csv":
+        media_type = "text/csv"
+    elif full_path.suffix in [".png", ".jpg", ".jpeg"]:
+        media_type = f"image/{full_path.suffix[1:]}"
+    
+    return FileResponse(
+        path=full_path,
+        media_type=media_type,
+        filename=full_path.name
     )

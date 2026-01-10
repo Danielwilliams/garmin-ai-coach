@@ -12,7 +12,9 @@ import {
   Target,
   TrendingUp,
   Calendar,
-  BarChart
+  BarChart,
+  FileDown,
+  Loader2
 } from 'lucide-react';
 import { Analysis, AnalysisResult, AnalysisFile } from '@/types/analysis';
 import { analysisAPI } from '@/lib/api';
@@ -28,6 +30,9 @@ const AnalysisDetailView: React.FC<AnalysisDetailViewProps> = ({ analysisId }) =
   const [files, setFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
+  const [isExportingPlan, setIsExportingPlan] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -68,6 +73,51 @@ const AnalysisDetailView: React.FC<AnalysisDetailViewProps> = ({ analysisId }) =
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br>');
+  };
+
+  const handleGenerateReport = async () => {
+    setIsGeneratingReport(true);
+    try {
+      const response = await analysisAPI.generateReport(analysisId);
+      // Trigger download
+      const downloadUrl = response.download_url;
+      window.open(downloadUrl, '_blank');
+    } catch (error: any) {
+      console.error('Failed to generate report:', error);
+      alert('Failed to generate report: ' + (error.detail || error.message));
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const handleExportData = async (format: 'json' | 'csv') => {
+    setIsExportingData(true);
+    try {
+      const response = await analysisAPI.exportData(analysisId, format);
+      // Trigger download
+      const downloadUrl = response.download_url;
+      window.open(downloadUrl, '_blank');
+    } catch (error: any) {
+      console.error('Failed to export data:', error);
+      alert('Failed to export data: ' + (error.detail || error.message));
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+  const handleExportWeeklyPlan = async () => {
+    setIsExportingPlan(true);
+    try {
+      const response = await analysisAPI.exportWeeklyPlan(analysisId);
+      // Trigger download
+      const downloadUrl = response.download_url;
+      window.open(downloadUrl, '_blank');
+    } catch (error: any) {
+      console.error('Failed to export weekly plan:', error);
+      alert('Failed to export weekly plan: ' + (error.detail || error.message));
+    } finally {
+      setIsExportingPlan(false);
+    }
   };
 
   if (isLoading) {
@@ -119,6 +169,59 @@ const AnalysisDetailView: React.FC<AnalysisDetailViewProps> = ({ analysisId }) =
           }`}>
             {analysis.status.charAt(0).toUpperCase() + analysis.status.slice(1)}
           </span>
+          
+          {analysis.status === 'completed' && (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateReport}
+                disabled={isGeneratingReport}
+                className="flex items-center"
+              >
+                {isGeneratingReport ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <FileDown className="w-4 h-4 mr-1" />
+                )}
+                Report
+              </Button>
+              
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isExportingData}
+                  className="flex items-center"
+                  onClick={() => handleExportData('json')}
+                >
+                  {isExportingData ? (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4 mr-1" />
+                  )}
+                  Export
+                </Button>
+              </div>
+              
+              {analysis.weekly_plan && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportWeeklyPlan}
+                  disabled={isExportingPlan}
+                  className="flex items-center"
+                >
+                  {isExportingPlan ? (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
+                    <Calendar className="w-4 h-4 mr-1" />
+                  )}
+                  Plan
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

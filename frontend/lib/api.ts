@@ -241,6 +241,45 @@ export const analysisAPI = {
       };
       throw apiError;
     }
+  },
+
+  async generateReport(analysisId: string): Promise<any> {
+    try {
+      const response = await api.post(`/analyses/${analysisId}/generate-report`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to generate report',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async exportData(analysisId: string, format: string = 'json'): Promise<any> {
+    try {
+      const response = await api.post(`/analyses/${analysisId}/export-data?export_format=${format}`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to export data',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async exportWeeklyPlan(analysisId: string): Promise<any> {
+    try {
+      const response = await api.post(`/analyses/${analysisId}/export-weekly-plan`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to export weekly plan',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
   }
 };
 
