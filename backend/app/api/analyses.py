@@ -36,6 +36,15 @@ except ImportError as e:
     REPORT_GENERATOR_AVAILABLE = False
     report_generator = None
 
+# Import AI analysis engine
+try:
+    from app.services.ai.analysis_engine import analysis_engine
+    AI_ENGINE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: AI engine not available - {e}")
+    AI_ENGINE_AVAILABLE = False
+    analysis_engine = None
+
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
 
@@ -228,7 +237,7 @@ async def create_analysis(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new analysis."""
+    """Create a new analysis using the AI engine."""
     
     # Verify the training config belongs to the user
     config_query = select(TrainingConfig).where(
@@ -246,23 +255,86 @@ async def create_analysis(
             detail="Training config not found"
         )
     
-    # Create the analysis
-    analysis = Analysis(
-        user_id=current_user.id,
-        training_config_id=analysis_data.training_config_id,
-        analysis_type=analysis_data.analysis_type,
-        workflow_id=analysis_data.workflow_id,
-        status="pending",
-        progress_percentage=0,
-        total_tokens=0,
-        retry_count=0
-    )
+    # Check if AI engine is available
+    if not AI_ENGINE_AVAILABLE:
+        # Fallback to simple analysis creation
+        analysis = Analysis(
+            user_id=current_user.id,
+            training_config_id=analysis_data.training_config_id,
+            analysis_type=analysis_data.analysis_type,
+            workflow_id=analysis_data.workflow_id,
+            status="pending",
+            progress_percentage=0,
+            total_tokens=0,
+            retry_count=0
+        )
+        
+        db.add(analysis)
+        await db.commit()
+        await db.refresh(analysis)
+        
+        return AnalysisResponse.model_validate(analysis)
     
-    db.add(analysis)
-    await db.commit()
-    await db.refresh(analysis)
-    
-    return AnalysisResponse.model_validate(analysis)
+    # Use AI engine to start analysis
+    try:
+        # Prepare analysis configuration from training config and request
+        analysis_config = {
+            "analysis_type": analysis_data.analysis_type,
+            "ai_mode": training_config.ai_mode,
+            "activities_days": training_config.activities_days,
+            "metrics_days": training_config.metrics_days,
+            "enable_plotting": training_config.enable_plotting,
+            "hitl_enabled": training_config.hitl_enabled,
+            "skip_synthesis": training_config.skip_synthesis,
+            "workflow_id": analysis_data.workflow_id
+        }
+        
+        # Start analysis using AI engine
+        analysis_id = await analysis_engine.start_analysis(
+            user_id=str(current_user.id),
+            training_config_id=str(analysis_data.training_config_id),
+            analysis_config=analysis_config,
+            db=db
+        )
+        
+        # Create analysis record in database
+        analysis = Analysis(
+            id=UUID(analysis_id),
+            user_id=current_user.id,
+            training_config_id=analysis_data.training_config_id,
+            analysis_type=analysis_data.analysis_type,
+            workflow_id=analysis_data.workflow_id,
+            status="running",
+            progress_percentage=0,
+            total_tokens=0,
+            retry_count=0
+        )
+        
+        db.add(analysis)
+        await db.commit()
+        await db.refresh(analysis)
+        
+        return AnalysisResponse.model_validate(analysis)
+        
+    except Exception as e:
+        # If AI engine fails, create analysis in failed state
+        analysis = Analysis(
+            user_id=current_user.id,
+            training_config_id=analysis_data.training_config_id,
+            analysis_type=analysis_data.analysis_type,
+            workflow_id=analysis_data.workflow_id,
+            status="failed",
+            error_message=f"Failed to start AI analysis: {str(e)}",
+            progress_percentage=0,
+            total_tokens=0,
+            retry_count=0
+        )
+        
+        db.add(analysis)
+        await db.commit()
+        await db.refresh(analysis)
+        
+        return AnalysisResponse.model_validate(analysis)
 
 
 @router.put("/{analysis_id}", response_model=AnalysisResponse)
