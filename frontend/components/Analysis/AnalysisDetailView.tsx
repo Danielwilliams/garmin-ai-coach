@@ -23,9 +23,9 @@ interface AnalysisDetailViewProps {
 }
 
 const AnalysisDetailView: React.FC<AnalysisDetailViewProps> = ({ analysisId }) => {
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [results, setResults] = useState<AnalysisResult[]>([]);
-  const [files, setFiles] = useState<AnalysisFile[]>([]);
+  const [analysis, setAnalysis] = useState<any | null>(null);
+  const [results, setResults] = useState<any[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

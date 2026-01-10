@@ -6,7 +6,7 @@ import AnalysisDashboard from '@/components/Analysis/AnalysisDashboard';
 import { trainingProfileAPI } from '@/lib/api';
 
 const AnalysisPage: React.FC = () => {
-  const [trainingProfiles, setTrainingProfiles] = useState([]);
+  const [trainingProfiles, setTrainingProfiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 

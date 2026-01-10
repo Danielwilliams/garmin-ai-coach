@@ -12,7 +12,7 @@ interface AnalysisDashboardProps {
 }
 
 const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ trainingProfiles = [] }) => {
-  const [analyses, setAnalyses] = useState<AnalysisSummary[]>([]);
+  const [analyses, setAnalyses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -41,8 +41,8 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ trainingProfiles 
     router.push('/analysis/new');
   };
 
-  const getStatusBadge = (status: Analysis['status']) => {
-    const statusStyles = {
+  const getStatusBadge = (status: string) => {
+    const statusStyles: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
       running: 'bg-blue-100 text-blue-800',
       completed: 'bg-green-100 text-green-800',
@@ -50,7 +50,7 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ trainingProfiles 
       cancelled: 'bg-gray-100 text-gray-800'
     };
 
-    const statusIcons = {
+    const statusIcons: Record<string, any> = {
       pending: <Clock className="w-3 h-3" />,
       running: <Zap className="w-3 h-3" />,
       completed: '✓',
@@ -59,8 +59,8 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ trainingProfiles 
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[status]}`}>
-        <span className="mr-1">{statusIcons[status]}</span>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
+        <span className="mr-1">{statusIcons[status] || '•'}</span>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
