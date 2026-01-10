@@ -28,7 +28,7 @@ class CompetitionCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Competition name")
     date: str = Field(..., min_length=1, max_length=20, description="Competition date")
     race_type: str = Field(..., min_length=1, max_length=50, description="Race type")
-    priority: str = Field(..., regex="^[ABC]$", description="Priority: A, B, or C")
+    priority: str = Field(..., pattern="^[ABC]$", description="Priority: A, B, or C")
     target_time: Optional[str] = Field(None, max_length=10, description="Target time in HH:MM:SS")
     bikereg_id: Optional[int] = Field(None, description="BikeReg event ID")
     runreg_url: Optional[str] = Field(None, max_length=500, description="RunReg event URL")
@@ -53,7 +53,7 @@ class TrainingConfigCreate(BaseModel):
     # Data extraction settings
     activities_days: int = Field(21, ge=1, le=365, description="Days of activity data")
     metrics_days: int = Field(56, ge=1, le=365, description="Days of metrics data")
-    ai_mode: str = Field("standard", regex="^(development|standard|cost_effective)$")
+    ai_mode: str = Field("standard", pattern="^(development|standard|cost_effective)$")
     enable_plotting: bool = Field(False, description="Enable analysis plotting")
     hitl_enabled: bool = Field(True, description="Human-in-the-loop enabled")
     skip_synthesis: bool = Field(False, description="Skip synthesis step")
@@ -73,7 +73,7 @@ class TrainingConfigUpdate(BaseModel):
     planning_context: Optional[str] = Field(None, min_length=10)
     activities_days: Optional[int] = Field(None, ge=1, le=365)
     metrics_days: Optional[int] = Field(None, ge=1, le=365)
-    ai_mode: Optional[str] = Field(None, regex="^(development|standard|cost_effective)$")
+    ai_mode: Optional[str] = Field(None, pattern="^(development|standard|cost_effective)$")
     enable_plotting: Optional[bool] = None
     hitl_enabled: Optional[bool] = None
     skip_synthesis: Optional[bool] = None
@@ -176,7 +176,7 @@ class TrainingProfileFormData(BaseModel):
     # Step 6: Analysis Settings
     activities_days: int = Field(21, ge=1, le=365)
     metrics_days: int = Field(56, ge=1, le=365)
-    ai_mode: str = Field("standard", regex="^(development|standard|cost_effective)$")
+    ai_mode: str = Field("standard", pattern="^(development|standard|cost_effective)$")
     enable_plotting: bool = Field(False)
     hitl_enabled: bool = Field(True)
     skip_synthesis: bool = Field(False)

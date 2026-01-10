@@ -10,8 +10,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
 import base64
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+# from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
@@ -149,34 +149,4 @@ def decrypt_password(encrypted_password: str) -> str:
         )
 
 
-# HTTP Bearer token security
-security = HTTPBearer()
-
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends()  # get_db will be injected by the router
-) -> "User":
-    """Get current user from JWT token."""
-    from app.database.models.user import User
-    
-    # Verify the token
-    user_id = verify_token(credentials.credentials)
-    if user_id is None:
-        raise credentials_exception
-    
-    # Get the user from database
-    query = select(User).where(User.id == user_id)
-    result = await db.execute(query)
-    user = result.scalar_one_or_none()
-    
-    if user is None:
-        raise credentials_exception
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    
-    return user
+# Note: get_current_user dependency moved to app/dependencies.py

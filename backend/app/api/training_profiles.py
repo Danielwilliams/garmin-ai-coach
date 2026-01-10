@@ -384,9 +384,12 @@ async def activate_training_profile(
 ):
     """Activate a training profile and deactivate others."""
     
-    # Deactivate all user's profiles
+    # Deactivate all user's profiles first
+    from sqlalchemy import update
     await db.execute(
-        select(TrainingConfig).where(TrainingConfig.user_id == current_user.id)
+        update(TrainingConfig)
+        .where(TrainingConfig.user_id == current_user.id)
+        .values(is_active=False)
     )
     
     # Activate the specified profile
