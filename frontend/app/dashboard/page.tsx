@@ -22,6 +22,10 @@ const Dashboard: React.FC = () => {
     router.push('/analysis');
   };
 
+  const handleViewAnalyses = () => {
+    router.push('/analysis');
+  };
+
   const handleViewProfiles = () => {
     router.push('/profile');
   };
@@ -205,6 +209,20 @@ const Dashboard: React.FC = () => {
                     </span>
                     <span className="block text-sm text-gray-500">
                       View and edit your training profiles
+                    </span>
+                  </div>
+                </button>
+
+                <button 
+                  onClick={handleViewAnalyses}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <div>
+                    <span className="block text-sm font-medium text-gray-900">
+                      View Analyses
+                    </span>
+                    <span className="block text-sm text-gray-500">
+                      Check your AI analysis results
                     </span>
                   </div>
                 </button>

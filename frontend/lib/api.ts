@@ -187,5 +187,102 @@ export const authAPI = {
   }
 };
 
+// Analysis API functions
+export const analysisAPI = {
+  async getAnalyses(): Promise<any[]> {
+    try {
+      const response = await api.get('/analyses');
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to fetch analyses',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async getAnalysis(analysisId: string): Promise<any> {
+    try {
+      const response = await api.get(`/analyses/${analysisId}`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to fetch analysis',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async createAnalysis(data: any): Promise<any> {
+    try {
+      const response = await api.post('/analyses', data);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to create analysis',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async getAnalysisResults(analysisId: string): Promise<any[]> {
+    try {
+      const response = await api.get(`/analyses/${analysisId}/results`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to fetch analysis results',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  }
+};
+
+// Training Profile API functions
+export const trainingProfileAPI = {
+  async getProfiles(): Promise<any[]> {
+    try {
+      const response = await api.get('/training-profiles');
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to fetch training profiles',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async getProfile(profileId: string): Promise<any> {
+    try {
+      const response = await api.get(`/training-profiles/${profileId}`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to fetch training profile',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  },
+
+  async createProfile(data: any): Promise<any> {
+    try {
+      const response = await api.post('/training-profiles/from-wizard', data);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to create training profile',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
+  }
+};
+
 export { TokenManager };
 export default api;
