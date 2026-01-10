@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # Database initialization removed - tables managed externally
 from app.api.auth import router as auth_router
 from app.api.training_profiles import router as training_profiles_router
+from app.api.analyses import router as analyses_router
+from app.api.mock_data import router as mock_router
 
 
 @asynccontextmanager
@@ -45,6 +47,8 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(training_profiles_router, prefix="/api/v1")
+app.include_router(analyses_router, prefix="/api/v1")
+app.include_router(mock_router, prefix="/api/v1")  # For testing dashboard
 
 # Root endpoint
 @app.get("/")
@@ -54,7 +58,7 @@ async def root():
         "version": "2.0.0",
         "environment": os.getenv("ENVIRONMENT", "production"),
         "status": "running",
-        "features": ["authentication", "multi-tenant", "database"],
+        "features": ["authentication", "training-profiles", "analysis", "multi-tenant", "database"],
         "docs": "/docs"
     }
 
