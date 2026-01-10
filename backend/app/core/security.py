@@ -5,8 +5,13 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
+from cryptography.fernet import Fernet
+import base64
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
@@ -103,3 +108,75 @@ def verify_refresh_token(token: str) -> Optional[str]:
         return user_id
     except JWTError:
         return None
+
+
+# Encryption for sensitive data (Garmin passwords)
+def _get_encryption_key() -> bytes:
+    """Get or create encryption key for sensitive data."""
+    key_str = os.getenv("ENCRYPTION_KEY", SECRET_KEY)
+    # Create a 32-byte key from the secret
+    key_bytes = key_str.encode()[:32].ljust(32, b'0')
+    return base64.urlsafe_b64encode(key_bytes)
+
+
+_fernet = Fernet(_get_encryption_key())
+
+
+def encrypt_password(password: str) -> str:
+    """Encrypt a password for secure storage."""
+    try:
+        encrypted_bytes = _fernet.encrypt(password.encode())
+        return base64.urlsafe_b64encode(encrypted_bytes).decode()
+    except Exception as e:
+        logger.error(f"Password encryption error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password encryption failed"
+        )
+
+
+def decrypt_password(encrypted_password: str) -> str:
+    """Decrypt a password from storage."""
+    try:
+        encrypted_bytes = base64.urlsafe_b64decode(encrypted_password.encode())
+        decrypted_bytes = _fernet.decrypt(encrypted_bytes)
+        return decrypted_bytes.decode()
+    except Exception as e:
+        logger.error(f"Password decryption error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password decryption failed"
+        )
+
+
+# HTTP Bearer token security
+security = HTTPBearer()
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends()  # get_db will be injected by the router
+) -> "User":
+    """Get current user from JWT token."""
+    from app.database.models.user import User
+    
+    # Verify the token
+    user_id = verify_token(credentials.credentials)
+    if user_id is None:
+        raise credentials_exception
+    
+    # Get the user from database
+    query = select(User).where(User.id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    
+    if user is None:
+        raise credentials_exception
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    return user

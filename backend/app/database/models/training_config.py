@@ -50,3 +50,16 @@ class Competition(Base):
     
     # Relationships
     # training_config = relationship("TrainingConfig", back_populates="competitions")
+
+
+class TrainingZone(Base):
+    """Training zones for different disciplines."""
+    
+    training_config_id = Column(UUID(as_uuid=True), nullable=False, index=True)  # Foreign key
+    
+    discipline = Column(String(20), nullable=False)  # Running, Cycling, Swimming
+    metric = Column(String(100), nullable=False)  # Description like "LTHR ≈ 171 bpm / 4:35 min/km"
+    value = Column(String(50), nullable=False)  # Value like "171 bpm", "213W", "1:30/100m"
+    
+    # Relationships (commented until we set up proper relationships)
+    # training_config = relationship("TrainingConfig", back_populates="training_zones")

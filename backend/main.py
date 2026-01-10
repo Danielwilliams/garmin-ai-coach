@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Database initialization removed - tables managed externally
 from app.api.auth import router as auth_router
+from app.api.training_profiles import router as training_profiles_router
 
 
 @asynccontextmanager
@@ -43,6 +44,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(training_profiles_router, prefix="/api/v1")
 
 # Root endpoint
 @app.get("/")
