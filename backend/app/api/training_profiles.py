@@ -24,7 +24,13 @@ from app.schemas.training_profile import (
 from app.core.security import encrypt_password, decrypt_password
 from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/training-profiles", tags=["training-profiles"])
+router = APIRouter(prefix="/training-profiles", tags=["training-profiles"], redirect_slashes=False)
+
+
+@router.get("/test")
+async def test_endpoint():
+    """Simple test endpoint without auth."""
+    return {"status": "ok", "message": "Training profiles API is working"}
 
 
 @router.get("/debug/count")
@@ -60,37 +66,48 @@ async def list_training_profiles(
     """Get list of user's training profiles with summary info."""
     
     try:
-        # Query training configs with counts
-        query = select(
-            TrainingConfig,
-            func.count(Competition.id).label('competitions_count'),
-            func.count(TrainingZone.id).label('zones_count')
-        ).outerjoin(
-            Competition, Competition.training_config_id == TrainingConfig.id
-        ).outerjoin(
-            TrainingZone, TrainingZone.training_config_id == TrainingConfig.id
-        ).where(
+        print(f"🔍 Fetching training profiles for user: {current_user.id}")
+        
+        # Simplified query first - just get training configs
+        query = select(TrainingConfig).where(
             TrainingConfig.user_id == current_user.id
-        ).group_by(TrainingConfig.id).order_by(
-            TrainingConfig.updated_at.desc()
-        )
+        ).order_by(TrainingConfig.updated_at.desc())
         
         result = await db.execute(query)
-        profiles = result.all()
+        profiles = result.scalars().all()
         
-        return [
-            TrainingProfileSummary(
-                id=profile.TrainingConfig.id,
-                name=profile.TrainingConfig.name,
-                is_active=profile.TrainingConfig.is_active,
-                competitions_count=profile.competitions_count or 0,
-                zones_count=profile.zones_count or 0,
-                ai_mode=profile.TrainingConfig.ai_mode,
-                created_at=profile.TrainingConfig.created_at,
-                updated_at=profile.TrainingConfig.updated_at
+        print(f"📊 Found {len(profiles)} training profiles")
+        
+        # Get counts separately to avoid complex joins
+        response_profiles = []
+        for profile in profiles:
+            # Get competition count
+            comp_query = select(func.count(Competition.id)).where(
+                Competition.training_config_id == profile.id
             )
-            for profile in profiles
-        ]
+            comp_result = await db.execute(comp_query)
+            comp_count = comp_result.scalar() or 0
+            
+            # Get zones count
+            zones_query = select(func.count(TrainingZone.id)).where(
+                TrainingZone.training_config_id == profile.id
+            )
+            zones_result = await db.execute(zones_query)
+            zones_count = zones_result.scalar() or 0
+            
+            response_profiles.append(TrainingProfileSummary(
+                id=profile.id,
+                name=profile.name,
+                is_active=profile.is_active,
+                competitions_count=comp_count,
+                zones_count=zones_count,
+                ai_mode=profile.ai_mode,
+                created_at=profile.created_at,
+                updated_at=profile.updated_at
+            ))
+        
+        print(f"✅ Returning {len(response_profiles)} profiles")
+        return response_profiles
         
     except Exception as e:
         print(f"🚨 Error in list_training_profiles: {e}")

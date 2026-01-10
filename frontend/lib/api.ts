@@ -287,7 +287,7 @@ export const analysisAPI = {
 export const trainingProfileAPI = {
   async getProfiles(): Promise<any[]> {
     try {
-      const response = await api.get('/training-profiles');
+      const response = await api.get('/training-profiles/');
       return response.data;
     } catch (error: any) {
       const apiError: ApiError = {
