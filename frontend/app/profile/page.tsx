@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import { Plus, Settings, Play, Trash2 } from 'lucide-react';
+import { trainingProfileAPI } from '@/lib/api';
 
 interface TrainingProfile {
   id: string;
@@ -20,17 +21,27 @@ interface TrainingProfile {
 const ProfilesPage: React.FC = () => {
   const [profiles, setProfiles] = useState<TrainingProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // TODO: Fetch profiles from API
-    // For now, show placeholder data
-    setTimeout(() => {
-      setProfiles([]);
-      setIsLoading(false);
-    }, 1000);
+    fetchProfiles();
   }, []);
+
+  const fetchProfiles = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await trainingProfileAPI.getProfiles();
+      setProfiles(data);
+    } catch (err: any) {
+      setError(err.detail || 'Failed to load training profiles');
+      console.error('Failed to fetch profiles:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateProfile = () => {
     router.push('/profile/create');
@@ -41,13 +52,31 @@ const ProfilesPage: React.FC = () => {
   };
 
   const handleActivateProfile = async (profileId: string) => {
-    // TODO: Call API to activate profile
-    console.log('Activating profile:', profileId);
+    try {
+      // TODO: Implement activate API endpoint
+      console.log('Activating profile:', profileId);
+      // For now, just refresh the profiles list
+      await fetchProfiles();
+    } catch (err: any) {
+      setError(err.detail || 'Failed to activate profile');
+    }
   };
 
   const handleDeleteProfile = async (profileId: string) => {
-    // TODO: Call API to delete profile
-    console.log('Deleting profile:', profileId);
+    if (!confirm('Are you sure you want to delete this training profile? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      // TODO: Implement delete API endpoint
+      console.log('Deleting profile:', profileId);
+      // For now, remove from local state
+      setProfiles(profiles.filter(p => p.id !== profileId));
+    } catch (err: any) {
+      setError(err.detail || 'Failed to delete profile');
+      // Refresh profiles on error to ensure state consistency
+      await fetchProfiles();
+    }
   };
 
   const handleStartAnalysis = (profileId: string) => {
@@ -58,6 +87,41 @@ const ProfilesPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white shadow">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <div className="flex items-center">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="mr-4 text-gray-400 hover:text-gray-600"
+                >
+                  ←
+                </button>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Training Profiles
+                </h1>
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <div className="text-center py-12">
+              <div className="text-red-600 mb-4">{error}</div>
+              <Button variant="outline" onClick={fetchProfiles}>
+                Retry
+              </Button>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

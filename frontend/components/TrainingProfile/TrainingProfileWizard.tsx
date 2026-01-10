@@ -21,12 +21,14 @@ interface TrainingProfileWizardProps {
   onSubmit: (data: CompleteTrainingProfileFormData) => Promise<void>;
   onCancel?: () => void;
   initialData?: Partial<CompleteTrainingProfileFormData>;
+  isEditMode?: boolean;
 }
 
 const TrainingProfileWizard: React.FC<TrainingProfileWizardProps> = ({
   onSubmit,
   onCancel,
-  initialData
+  initialData,
+  isEditMode = false
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
