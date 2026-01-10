@@ -4,23 +4,23 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import TrainingProfileWizard from '@/components/TrainingProfile/TrainingProfileWizard';
 import { CompleteTrainingProfileFormData } from '@/lib/validations/training';
+import api from '@/lib/api';
 
 const CreateProfilePage: React.FC = () => {
   const router = useRouter();
 
   const handleSubmit = async (data: CompleteTrainingProfileFormData) => {
     try {
-      // TODO: Call the backend API to create the training profile
-      console.log('Training profile data:', data);
+      const response = await api.post('/training-profiles/from-wizard', data);
+      console.log('Training profile created:', response.data);
       
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Redirect to dashboard or profile list on success
+      // Redirect to dashboard with success message
       router.push('/dashboard?created=true');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating training profile:', error);
-      // Handle error (show toast, etc.)
+      
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create training profile';
+      alert(`Error creating profile: ${errorMessage}`);
     }
   };
 
