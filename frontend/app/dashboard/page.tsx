@@ -1,15 +1,29 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 
 const Dashboard: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
 
   const handleLogout = () => {
     logout();
     window.location.href = '/auth/login';
+  };
+
+  const handleCreateProfile = () => {
+    router.push('/profile/create');
+  };
+
+  const handleStartAnalysis = () => {
+    router.push('/analysis');
+  };
+
+  const handleViewProfiles = () => {
+    router.push('/profile');
   };
 
   if (isLoading) {
@@ -77,9 +91,17 @@ const Dashboard: React.FC = () => {
                     Your AI-powered triathlon coaching platform is ready to help you achieve your goals.
                   </p>
                 </div>
-                <div className="mt-5 sm:mt-0 sm:ml-6 sm:flex-shrink-0 sm:flex sm:items-center">
-                  <Button>
-                    Start New Analysis
+                <div className="mt-5 sm:mt-0 sm:ml-6 sm:flex-shrink-0 sm:flex sm:items-center space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleCreateProfile}
+                  >
+                    Create Profile
+                  </Button>
+                  <Button
+                    onClick={handleStartAnalysis}
+                  >
+                    Start Analysis
                   </Button>
                 </div>
               </div>
@@ -159,24 +181,30 @@ const Dashboard: React.FC = () => {
                   </div>
                 </button>
 
-                <button className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button 
+                  onClick={handleCreateProfile}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
                   <div>
                     <span className="block text-sm font-medium text-gray-900">
-                      Create Training Plan
+                      Create Training Profile
                     </span>
                     <span className="block text-sm text-gray-500">
-                      Set up your training goals
+                      Set up your training goals and competitions
                     </span>
                   </div>
                 </button>
 
-                <button className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button 
+                  onClick={handleViewProfiles}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
                   <div>
                     <span className="block text-sm font-medium text-gray-900">
-                      View Analysis
+                      Manage Profiles
                     </span>
                     <span className="block text-sm text-gray-500">
-                      Check your progress reports
+                      View and edit your training profiles
                     </span>
                   </div>
                 </button>
