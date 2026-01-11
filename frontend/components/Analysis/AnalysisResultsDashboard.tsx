@@ -32,6 +32,7 @@ import { AnalysisWithResults, AnalysisResult } from '@/types/analysis';
 import { analysisAPI } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import TrainingMetricsChart from './TrainingMetricsChart';
+import InteractiveTrainingPlan from './InteractiveTrainingPlan';
 
 interface AnalysisResultsDashboardProps {
   analysisId: string;
@@ -535,33 +536,10 @@ const AnalysisResultsDashboard: React.FC<AnalysisResultsDashboardProps> = ({ ana
         {activeTab === 'plan' && (
           <div className="space-y-6">
             {analysis.weekly_plan ? (
-              <div className="bg-white rounded-lg border p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <Calendar className="w-6 h-6 mr-2 text-purple-600" />
-                    Weekly Training Plan
-                  </h3>
-                  {analysis.weekly_plan && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleExportWeeklyPlan}
-                      disabled={isExportingPlan}
-                      className="flex items-center"
-                    >
-                      {isExportingPlan ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Download className="w-4 h-4 mr-2" />
-                      )}
-                      Export Plan
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-4">
-                  {formatWeeklyPlan(analysis.weekly_plan)}
-                </div>
-              </div>
+              <InteractiveTrainingPlan 
+                weeklyPlan={analysis.weekly_plan}
+                analysisId={analysisId}
+              />
             ) : (
               <div className="text-center py-12">
                 <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />

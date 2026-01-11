@@ -1,0 +1,1148 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athlete Performance Report - January 7, 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #2563eb;
+            --primary-dark: #1e40af;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-light);
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-white);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-bottom: 4px solid var(--primary-dark);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+
+        .header-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-meta-item strong {
+            font-weight: 600;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--primary-blue);
+            letter-spacing: -0.025em;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 2rem 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h4 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Executive Summary */
+        .executive-summary {
+            background: linear-gradient(to right, #fef3c7, #fde68a);
+            border-left: 6px solid var(--warning-orange);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .readiness-score {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-white);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .readiness-score-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--warning-orange);
+            line-height: 1;
+        }
+
+        .readiness-score-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        /* KPI Table */
+        .kpi-table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-white);
+        }
+
+        thead {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-good {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-caution {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-critical {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .trend-up {
+            color: var(--danger-red);
+        }
+
+        .trend-down {
+            color: var(--success-green);
+        }
+
+        .trend-stable {
+            color: var(--text-muted);
+        }
+
+        /* Plot Placeholders */
+        .plot-container {
+            background: var(--bg-light);
+            border: 2px dashed var(--border-light);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            color: var(--text-muted);
+            font-size: 1.125rem;
+            text-align: center;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 1rem 0 1rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+        }
+
+        /* Callout Boxes */
+        .callout {
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .callout-info {
+            background: #dbeafe;
+            border-color: var(--primary-blue);
+        }
+
+        .callout-warning {
+            background: #fef3c7;
+            border-color: var(--warning-orange);
+        }
+
+        .callout-danger {
+            background: #fee2e2;
+            border-color: var(--danger-red);
+        }
+
+        .callout-success {
+            background: #d1fae5;
+            border-color: var(--success-green);
+        }
+
+        .callout strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+
+        /* Priority Boxes */
+        .priority-section {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 2px solid var(--border-light);
+        }
+
+        .priority-section h4 {
+            color: var(--primary-blue);
+            margin-top: 0;
+        }
+
+        /* Recommendations */
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .recommendation-card {
+            background: var(--bg-white);
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .recommendation-card h4 {
+            margin-top: 0;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary-blue);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.375rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            border: 3px solid var(--bg-white);
+            box-shadow: 0 0 0 2px var(--primary-blue);
+        }
+
+        .timeline-item h4 {
+            margin-top: 0;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: var(--bg-white);
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            line-height: 1;
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-change {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* Conclusion */
+        .conclusion {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 3rem;
+        }
+
+        .conclusion h2 {
+            color: white;
+            border-bottom-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .conclusion p {
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 2rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.875rem;
+            }
+
+            .content {
+                padding: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
+            }
+
+            .header-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .recommendation-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.875rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .recommendation-card,
+            .metric-card {
+                break-inside: avoid;
+            }
+        }
+
+        /* Emoji styling */
+        .emoji {
+            font-style: normal;
+            font-size: 1.2em;
+        }
+
+        /* Strong emphasis */
+        strong {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Code-like emphasis */
+        em {
+            font-style: italic;
+            color: var(--primary-blue);
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid var(--border-light);
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🏃 ATHLETE PERFORMANCE REPORT</h1>
+            <div class="header-meta">
+                <div class="header-meta-item">
+                    <span class="emoji">📅</span>
+                    <div><strong>Reporting Period:</strong> November 12, 2025 - January 7, 2026 (57 days)</div>
+                </div>
+                <div class="header-meta-item">
+                    <span class="emoji">📊</span>
+                    <div><strong>Report Date:</strong> Wednesday, January 7, 2026</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Executive Summary -->
+            <section class="section executive-summary">
+                <h2>📋 EXECUTIVE SUMMARY</h2>
+                
+                <div class="readiness-score">
+                    <div>
+                        <div class="readiness-score-value">58<span style="font-size: 1.5rem; color: var(--text-muted);">/100</span></div>
+                        <div class="readiness-score-label">Current Readiness</div>
+                    </div>
+                    <div style="flex: 1; padding-left: 1rem; border-left: 2px solid var(--border-light);">
+                        <strong style="color: var(--danger-red);">⚠️ High-Risk Training State</strong>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">Immediate intervention required</p>
+                    </div>
+                </div>
+
+                <p>You are <strong>73 days from your first B-priority race</strong> and <strong>124 days from your A-priority Sasquatch Duro</strong>, yet your training pattern shows a concerning disconnect between ambition and execution. Over the past 8 weeks, you've demonstrated the <em>capacity</em> for high-quality work—exemplified by sustained 3-hour mountain bike sessions and disciplined interval execution—but this capacity is being undermined by three critical factors operating in concert:</p>
+
+                <div class="callout callout-danger">
+                    <strong>1. Load Volatility Crisis</strong>
+                    <p>Your current training week shows acute loads of 645-686 with an Acute:Chronic Workload Ratio of 2.4-2.7, placing you in the high-injury-risk zone. This follows a pattern of intense training "islands" (1-week blocks) separated by extended periods of minimal activity, preventing cumulative fitness development.</p>
+                </div>
+
+                <div class="callout callout-danger">
+                    <strong>2. Recovery Architecture Collapse</strong>
+                    <p>Sleep duration has deteriorated to 5.3 hours/night over the past week, with four complete REM-sleep failures in the observation period. Your resting heart rate has shifted from a 47-49 bpm baseline to 52-53 bpm, signaling incomplete recovery between sessions.</p>
+                </div>
+
+                <div class="callout callout-danger">
+                    <strong>3. Execution-Recovery Mismatch</strong>
+                    <p>While you execute high-quality workouts when engaged (IF 0.90 threshold sessions, controlled 3-hour endurance blocks), the physiological cost isn't being managed through adequate sleep, hydration (zero fluid intake on 75% of training days), or load progression.</p>
+                </div>
+
+                <div class="callout callout-warning">
+                    <strong>🎯 The Bottom Line</strong>
+                    <p>Your engine is strong, but you're running it without sufficient oil, coolant, or maintenance intervals. For an athlete managing post-surgical recovery (spinal fusion + cervical discs) with body recomposition goals and A-priority endurance targets requiring 3-6 hours of sustained effort, this approach is unsustainable and potentially dangerous.</p>
+                </div>
+            </section>
+
+            <!-- Key Performance Indicators -->
+            <section class="section">
+                <h2>📊 KEY PERFORMANCE INDICATORS</h2>
+                
+                <div class="kpi-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Current Value</th>
+                                <th>Target Range</th>
+                                <th>Status</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Readiness Score</strong></td>
+                                <td>58/100</td>
+                                <td>70-85</td>
+                                <td><span class="status-indicator status-caution">⚠️ Caution</span></td>
+                                <td class="trend-down">↓ Declining</td>
+                            </tr>
+                            <tr>
+                                <td><strong>ACWR (Injury Risk)</strong></td>
+                                <td>2.4-2.7</td>
+                                <td>0.8-1.3</td>
+                                <td><span class="status-indicator status-critical">🔴 High Risk</span></td>
+                                <td class="trend-up">↑ Increasing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>VO₂max (Running)</strong></td>
+                                <td>46 ml/kg/min</td>
+                                <td>48-52</td>
+                                <td><span class="status-indicator status-caution">⚠️ Below Target</span></td>
+                                <td class="trend-stable">→ Stable</td>
+                            </tr>
+                            <tr>
+                                <td><strong>VO₂max (Cycling)</strong></td>
+                                <td>46 ml/kg/min</td>
+                                <td>48-52</td>
+                                <td><span class="status-indicator status-caution">⚠️ Below Target</span></td>
+                                <td class="trend-stable">→ Stable</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sleep Duration (7d avg)</strong></td>
+                                <td>5.3 hours</td>
+                                <td>7-8 hours</td>
+                                <td><span class="status-indicator status-critical">🔴 Critical</span></td>
+                                <td class="trend-down">↓ Declining</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Resting Heart Rate</strong></td>
+                                <td>52 bpm</td>
+                                <td>46-49 bpm</td>
+                                <td><span class="status-indicator status-caution">⚠️ Elevated</span></td>
+                                <td class="trend-up">↑ Elevated</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sleep HRV</strong></td>
+                                <td>46 ms (recent)</td>
+                                <td>55-68 ms</td>
+                                <td><span class="status-indicator status-caution">⚠️ Suppressed</span></td>
+                                <td class="trend-down">↓ Declining</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chronic Training Load</strong></td>
+                                <td>270</td>
+                                <td>350-450</td>
+                                <td><span class="status-indicator status-critical">🔴 Insufficient</span></td>
+                                <td class="trend-up">↑ Rising (recent)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Hydration Compliance</strong></td>
+                                <td>25% of sessions</td>
+                                <td>100%</td>
+                                <td><span class="status-indicator status-critical">🔴 Critical</span></td>
+                                <td class="trend-stable">→ Unchanged</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Activity Execution Quality</strong></td>
+                                <td>78/100</td>
+                                <td>80-90</td>
+                                <td><span class="status-indicator status-caution">⚠️ Good</span></td>
+                                <td class="trend-stable">→ Stable</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Deep Dive Analysis -->
+            <section class="section">
+                <h2>🔬 DEEP DIVE ANALYSIS</h2>
+
+                <!-- Training Load Dynamics -->
+                <div class="priority-section">
+                    <h3>1️⃣ TRAINING LOAD DYNAMICS: THE FEAST-OR-FAMINE PATTERN</h3>
+
+                    <div class="plot-container">
+                        
+<div class="plot-error" style="padding: 20px; border: 2px solid #ff6b6b; margin: 10px 0; text-align: center; background-color: #ffe0e0;">
+    <p><strong>Plot Not Found</strong></p>
+    <p>Plot ID: training_load_overview</p>
+</div>
+                    </div>
+
+                    <p>Your 57-day training history reveals a problematic pattern: three distinct training blocks (Nov 13-18, Dec 12-17, Jan 1-6) characterized by rapid load escalation, followed by extended periods of near-zero activity. This "on-off" approach has prevented the steady chronic load accumulation necessary for endurance adaptation.</p>
+
+                    <h4>📈 The Numbers Tell the Story:</h4>
+                    <ul>
+                        <li>Your chronic load remained static at <strong>219 for 52 consecutive days</strong> (Nov 12 - Jan 2), meaning your fitness foundation didn't improve despite completing two training blocks during this period</li>
+                        <li>Only in the past 4 days has chronic load begun rising (219→270, a <strong>23% increase</strong>), but this acceleration is being driven by acute loads that are <strong>2.4-3.1× your chronic capacity</strong></li>
+                        <li>Current acute loads of <strong>645-686</strong> represent your highest sustained output of the observation period, yet they're being applied to an insufficiently developed base</li>
+                    </ul>
+
+                    <div class="callout callout-warning">
+                        <strong>🎯 Why This Matters for Your Goals:</strong>
+                        <p>For Sasquatch Duro (3 hours) and Royal Gorge 6 (6 hours), you need chronic loads in the 350-450 range to support the sustained power outputs required. Your current pattern suggests you can <em>execute</em> individual hard sessions, but you cannot <em>sustain</em> consistent training weeks—the exact capability these events demand.</p>
+                    </div>
+
+                    <div class="callout callout-danger">
+                        <strong>🏥 Post-Surgical Context:</strong>
+                        <p>Given your spinal fusion and cervical disc history, the load volatility carries additional risk. Musculoskeletal adaptation requires consistent, progressive loading. Your current pattern subjects tissues to sudden high stress after periods of deconditioning, increasing injury vulnerability in already-compromised structures.</p>
+                    </div>
+                </div>
+
+                <!-- Physiological Response -->
+                <div class="priority-section">
+                    <h3>2️⃣ PHYSIOLOGICAL RESPONSE: THE COST OF AMBITION</h3>
+
+                    <div class="plot-container">
+                        
+<div class="plot-error" style="padding: 20px; border: 2px solid #ff6b6b; margin: 10px 0; text-align: center; background-color: #ffe0e0;">
+    <p><strong>Plot Not Found</strong></p>
+    <p>Plot ID: sleep_quality_trends</p>
+</div>
+                    </div>
+
+                    <p>Your body is sending clear distress signals that are being overridden by training ambition:</p>
+
+                    <h4>😴 Sleep Architecture Breakdown:</h4>
+                    <p>The data reveals a striking deterioration pattern. In the first 15 nights of observation, you consistently achieved sleep scores of 75-85 with regular REM cycles and balanced sleep stage distribution. By days 31-40, sleep duration collapsed to <strong>5.3 hours/night</strong>, with <strong>four nights showing complete absence of REM sleep</strong>—a state typically associated with severe stress, illness, or circadian disruption.</p>
+
+                    <p>Night 30 stands out as a catastrophic event: <strong>1.02 hours of total sleep</strong> with a score of 20. While this could represent measurement error, it occurred immediately after your highest-stress day (Day 29: average stress 88), suggesting a genuine physiological crisis point.</p>
+
+                    <h4>💓 Autonomic Nervous System Dysregulation:</h4>
+
+                    <div class="plot-container">
+                        
+<div class="plot-error" style="padding: 20px; border: 2px solid #ff6b6b; margin: 10px 0; text-align: center; background-color: #ffe0e0;">
+    <p><strong>Plot Not Found</strong></p>
+    <p>Plot ID: hrv_rhr_correlation</p>
+</div>
+                    </div>
+
+                    <p>Your resting heart rate has shifted from a healthy <strong>47-49 bpm baseline</strong> (nights 1-20) to a persistently elevated <strong>52-53 bpm state</strong> (nights 28-32, 38, 40). This 5-6 bpm elevation, while seemingly modest, represents a <strong>10-12% increase from baseline</strong>—significant enough to indicate incomplete parasympathetic recovery between training sessions.</p>
+
+                    <p>Sleep HRV shows corresponding volatility, ranging from 35ms (high stress) to 68ms (recovered), but recent values cluster around 46ms—below your demonstrated capability. The absence of daily HRV measurements limits insight, but sleep-derived values suggest you're oscillating between sympathetic saturation and incomplete recovery rather than achieving true adaptive homeostasis.</p>
+
+                    <h4>⚡ Stress Load Reality:</h4>
+                    <p>Your average daily stress hovers around 30-33, but dangerous spikes to <strong>88 (Day 51)</strong>, <strong>81 (Day 53)</strong>, and <strong>66 (Day 55)</strong> indicate regular sympathetic saturation. These extreme stress days correlate with subsequent sleep crashes, creating a vicious cycle: high training load → sympathetic overdrive → poor sleep → elevated baseline stress → impaired workout quality.</p>
+
+                    <div class="callout callout-critical">
+                        <strong>💧 The Hydration Deficit Amplifier:</strong>
+                        <p>Perhaps most concerning is that <strong>12 of your 16 recorded activity days show zero fluid intake</strong> despite sweat losses of 0.5-1.1L per session. Only four logged intake sessions (0.75L each) across 57 days suggests either non-compliance or incomplete data capture. Chronic dehydration compounds every recovery deficit by:</p>
+                        <ul>
+                            <li>Limiting thermoregulation during efforts</li>
+                            <li>Reducing nutrient transport to recovering tissues</li>
+                            <li>Impairing waste clearance from muscle tissue</li>
+                            <li>Increasing cardiovascular strain (contributing to RHR elevation)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Workout Execution -->
+                <div class="priority-section">
+                    <h3>3️⃣ WORKOUT EXECUTION: QUALITY WHEN ENGAGED</h3>
+
+                    <div class="plot-container">
+                        
+<div class="plot-error" style="padding: 20px; border: 2px solid #ff6b6b; margin: 10px 0; text-align: center; background-color: #ffe0e0;">
+    <p><strong>Plot Not Found</strong></p>
+    <p>Plot ID: workout_intensity_distribution</p>
+</div>
+                    </div>
+
+                    <p>Despite the physiological stress signals, your workout execution quality scores <strong>78/100</strong>—a testament to your technical skill and mental discipline when you engage with structured training.</p>
+
+                    <h4>✅ Strengths in Execution:</h4>
+                    <p>Your <strong>January 6 Zwift session</strong> demonstrates textbook interval execution: progressive 30-second high-intensity efforts (230-270W normalized power) with controlled 2-minute recovery blocks (190W). Lap-by-lap data shows you can hit power targets, manage heart rate response, and maintain workout structure even when fatigued.</p>
+
+                    <p>The <strong>January 3 mountain bike session</strong> showcases your endurance capacity: <strong>3 hours at 166W normalized power (IF 0.79)</strong> with 676m of climbing. Despite technical terrain requiring brief maximal efforts (885W spikes), you maintained controlled average power without cardiac drift (HR stable at 139 bpm across 3+ hours). For an athlete with spinal surgery history, this represents impressive positional tolerance and neuromuscular endurance.</p>
+
+                    <p>Your threshold work (<strong>Jan 1-2: 180W average, 190W NP, IF 0.90, 152 bpm sustained for 74 minutes</strong>) defines your current ceiling for tempo-to-threshold efforts and shows solid pacing consistency.</p>
+
+                    <h4>⚠️ Execution Concerns:</h4>
+                    <p>The <strong>January 5 indoor session</strong> reveals a troubling pattern: 20 minutes of proper threshold work (125W avg, 140 bpm) followed by abrupt cessation with 6+ minutes of near-zero power (4W avg, 106 bpm). This doesn't appear to be a planned cool-down but rather premature termination, suggesting either motivation failure, physical discomfort, or equipment issues.</p>
+
+                    <p>Your workout completion rate shows environment-dependent adherence: <strong>100% completion for outdoor sessions</strong> but inconsistent indoor work. This creates training gaps during periods when weather, time constraints, or recovery needs dictate indoor training.</p>
+
+                    <h4>📱 Platform and Data Concerns:</h4>
+                    <p>Three distinct recording platforms (Zwift virtual, indoor cycling, mountain biking) occasionally show duplicate activities on the same day (Jan 1, Jan 3, Jan 4), with some sessions appearing simultaneous. This suggests device redundancy or data sync issues that may artificially inflate training volume calculations, making load management decisions less reliable.</p>
+                </div>
+
+                <!-- Fitness Trajectory -->
+                <div class="priority-section">
+                    <h3>4️⃣ FITNESS TRAJECTORY: STABILITY WITHOUT PROGRESSION</h3>
+
+                    <div class="plot-container">
+                        
+<div class="plot-error" style="padding: 20px; border: 2px solid #ff6b6b; margin: 10px 0; text-align: center; background-color: #ffe0e0;">
+    <p><strong>Plot Not Found</strong></p>
+    <p>Plot ID: fitness_progression</p>
+</div>
+                    </div>
+
+                    <p>Your VO₂max across both running and cycling modalities shows remarkable stability within a narrow <strong>43-46 ml/kg/min range</strong>, despite the erratic load pattern. This cuts both ways:</p>
+
+                    <h4>✅ The Good News:</h4>
+                    <ul>
+                        <li>Baseline aerobic capacity is protected despite training gaps</li>
+                        <li>Recent uptick from 43 (Nov 13) to 45-46 (Jan) represents <strong>7% improvement</strong></li>
+                        <li>You haven't experienced the fitness decay that typically follows extended low-activity periods</li>
+                    </ul>
+
+                    <h4>⚠️ The Concerning Reality:</h4>
+                    <ul>
+                        <li>The narrow 3-point range (6.8% variation) indicates neither significant improvement nor decline across 57 days</li>
+                        <li>For an athlete <strong>17.7 weeks from a 6-hour endurance event</strong>, this stability represents stagnation rather than progression</li>
+                        <li>Current VO₂max of 46 ml/kg/min is modest for the demands of your A-priority events</li>
+                    </ul>
+
+                    <div class="callout callout-info">
+                        <strong>🎯 What This Means:</strong>
+                        <p>Your fitness isn't <em>declining</em>, but it's not <em>building</em> either. The training blocks you complete successfully preserve existing capacity without creating meaningful adaptation. This aligns with your chronic load pattern: the base isn't growing because training consistency doesn't extend beyond 7-10 day bursts.</p>
+                    </div>
+                </div>
+
+                <!-- Integration -->
+                <div class="priority-section">
+                    <h3>5️⃣ INTEGRATION: THE PERFORMANCE INTERFERENCE PATTERN</h3>
+
+                    <p>When we overlay load, execution, and physiological response, a clear pattern emerges:</p>
+
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <h4>Week 1 (Training Block Initiation):</h4>
+                            <ul>
+                                <li>High-quality workout execution (IF 0.79-0.90)</li>
+                                <li>Acute load ramps rapidly (250→686)</li>
+                                <li>Sleep quality begins degrading (scores drop from 75 to 60)</li>
+                                <li>RHR begins elevating (+2-3 bpm)</li>
+                            </ul>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h4>Week 2 (Accumulated Fatigue):</h4>
+                            <ul>
+                                <li>Workout quality maintained but requires greater effort</li>
+                                <li>ACWR exceeds 1.5 (injury risk zone)</li>
+                                <li>Sleep further deteriorates (REM suppression, duration &lt;6h)</li>
+                                <li>Stress scores spike (80-90 daily average)</li>
+                            </ul>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h4>Week 3+ (Collapse or Forced Rest):</h4>
+                            <ul>
+                                <li>Training volume crashes to near-zero</li>
+                                <li>Sleep partially recovers but doesn't return to baseline</li>
+                                <li>RHR remains elevated despite reduced training load</li>
+                                <li>Chronic load stagnates or declines</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="callout callout-danger">
+                        <strong>🚨 Critical Alert:</strong>
+                        <p>This cycle has repeated three times in your observation period, and you're currently in <strong>Week 2 of the third iteration</strong>—the highest-risk phase.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Critical Priorities & Recommendations -->
+            <section class="section">
+                <h2>🎯 CRITICAL PRIORITIES & RECOMMENDATIONS</h2>
+
+                <h3>⚡ IMMEDIATE ACTIONS (This Week)</h3>
+
+                <div class="recommendation-grid">
+                    <div class="recommendation-card">
+                        <h4>1️⃣ Load Management - Emergency De-escalation</h4>
+                        <ul>
+                            <li><strong>Reduce acute load by 40%</strong> this week (target: 350-400 vs current 645-686)</li>
+                            <li>Replace 2 scheduled hard sessions with 60-minute Z2 rides or active recovery</li>
+                            <li>Implement a "hard day-easy day-off day" pattern for the next 7 days</li>
+                            <li><strong>No sessions with IF &gt;0.75</strong> until RHR returns to 49 bpm or below</li>
+                        </ul>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <h4>2️⃣ Sleep Architecture Repair</h4>
+                        <ul>
+                            <li><strong>Non-negotiable 7-hour sleep opportunity</strong> every night this week</li>
+                            <li>Establish fixed sleep/wake times (even on weekends)</li>
+                            <li>Create 30-minute pre-bed wind-down protocol (no screens, dim lighting, cool room)</li>
+                            <li>Consider sleep consultation if REM suppression continues beyond 7 days</li>
+                        </ul>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <h4>3️⃣ Hydration Compliance</h4>
+                        <ul>
+                            <li><strong>Log fluid intake for every training session</strong> (no exceptions)</li>
+                            <li>Minimum targets:
+                                <ul>
+                                    <li>Indoor sessions: 750ml/hour</li>
+                                    <li>Outdoor sessions &lt;2h: 500ml/hour</li>
+                                    <li>Outdoor sessions &gt;2h: 750ml/hour + electrolytes</li>
+                                </ul>
+                            </li>
+                            <li>Pre-hydrate with 500ml 2 hours before sessions</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>📅 SHORT-TERM ADJUSTMENTS (Weeks 2-4)</h3>
+
+                <div class="priority-section">
+                    <h4>4️⃣ Load Progression Restructure</h4>
+                    <p>Build chronic load gradually while managing acute spikes:</p>
+                    <ul>
+                        <li><strong>Week of Jan 7-13:</strong> Reduce to 350-400 acute load (active recovery week)</li>
+                        <li><strong>Week of Jan 14-20:</strong> Build to 450-500 (ACWR target: 1.2)</li>
+                        <li><strong>Week of Jan 21-27:</strong> Reach 550-600 (ACWR target: 1.3)</li>
+                        <li><strong>Week of Jan 28-Feb 3:</strong> Consolidate at 500-550 with recovery week</li>
+                    </ul>
+                    <p>This approach targets chronic load of <strong>425 by February 1</strong> (vs current 270), providing adequate base for Spring race series.</p>
+                </div>
+
+                <div class="priority-section">
+                    <h4>5️⃣ Session Structure Optimization</h4>
+                    <p>Given your execution strengths and completion challenges:</p>
+                    <ul>
+                        <li><strong>Prioritize outdoor sessions</strong> for adherence (weather permitting)</li>
+                        <li><strong>Indoor sessions:</strong> Limit to 45-60 minutes with clear structure (warmup-intervals-cooldown)</li>
+                        <li><strong>Add "minimum viable workout" options:</strong> 30-minute Z2 spins for days when motivation/time/energy is limited</li>
+                        <li><strong>Eliminate sessions requiring &gt;90 minutes</strong> until chronic load reaches 400</li>
+                    </ul>
+                </div>
+
+                <div class="priority-section">
+                    <h4>6️⃣ Recovery Modalities Integration</h4>
+                    <p>You've shown one cold plunge session (Dec 24) with good autonomic response. Consider:</p>
+                    <ul>
+                        <li><strong>Weekly contrast therapy:</strong> 1-2 sessions post-hard training days</li>
+                        <li><strong>Daily HRV monitoring:</strong> Establish morning protocol to track readiness trends</li>
+                        <li><strong>Nightly readiness check:</strong> 3-question assessment (sleep quality, soreness, motivation) to guide next-day intensity</li>
+                    </ul>
+                </div>
+
+                <h3>🏆 MEDIUM-TERM STRATEGY (8-12 Weeks, Racing Season Prep)</h3>
+
+                <div class="priority-section">
+                    <h4>7️⃣ Race-Specific Preparation Timeline</h4>
+
+                    <div class="plot-container">
+                        
+<div class="plot-error" style="padding: 20px; border: 2px solid #ff6b6b; margin: 10px 0; text-align: center; background-color: #ffe0e0;">
+    <p><strong>Plot Not Found</strong></p>
+    <p>Plot ID: race_preparation_timeline</p>
+</div>
+                    </div>
+
+                    <p>With three events in a 9-week span (Mar 20, Apr 11, May 16), you need a structured build:</p>
+
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <h4>Phase 1 (Jan 7-Feb 10, 5 weeks): Foundation Repair</h4>
+                            <ul>
+                                <li><strong>Goal:</strong> Establish chronic load of 450-500 with stable physiological markers</li>
+                                <li><strong>Focus:</strong> Consistent Z2 volume (70% of training time) with 1-2 quality sessions/week</li>
+                                <li><strong>Success metrics:</strong> RHR returns to 47-49, sleep scores consistently &gt;70, ACWR &lt;1.3</li>
+                            </ul>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h4>Phase 2 (Feb 11-Mar 16, 5 weeks): Event-Specific Build</h4>
+                            <ul>
+                                <li><strong>Goal:</strong> Develop race-specific fitness for Sprint Series Race 1</li>
+                                <li><strong>Focus:</strong> Tempo and threshold work (IF 0.85-0.95) with volume at 80% of peak</li>
+                                <li>Include 2-3 "race simulation" sessions: 60-75 min at target race intensity</li>
+                            </ul>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h4>Phase 3 (Mar 17-Apr 7, 3 weeks): Sasquatch Duro Preparation</h4>
+                            <ul>
+                                <li><strong>Goal:</strong> Extend endurance duration while managing Sprint Series Race 1 recovery</li>
+                                <li><strong>Focus:</strong> Progressive long rides (2.5h→3.5h) at IF 0.70-0.80 with climbing emphasis</li>
+                                <li><strong>Taper week (Apr 1-7):</strong> Reduce volume 40%, maintain intensity</li>
+                            </ul>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h4>Phase 4 (Apr 8-May 12, 5 weeks): Royal Gorge Peak</h4>
+                            <ul>
+                                <li><strong>Goal:</strong> Build 4-6 hour endurance capacity</li>
+                                <li><strong>Focus:</strong> Back-to-back long sessions (Sat 3-4h, Sun 2-3h) with specificity work</li>
+                                <li>Include 1-2 "mega sessions": 5+ hours at target race pace</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="priority-section">
+                    <h4>8️⃣ Body Recomposition Integration</h4>
+                    <p>Your stated goal of body recomposition requires specific attention:</p>
+                    <ul>
+                        <li><strong>Nutrition timing:</strong> Protein intake within 30 min post-training (0.25g/kg bodyweight minimum)</li>
+                        <li><strong>Fueling strategy:</strong> Adequate carbohydrate during sessions (30-60g/hour) despite recomp goals</li>
+                        <li><strong>Recovery nutrition:</strong> Don't create caloric deficits on high-load days</li>
+                        <li><strong>Body composition tracking:</strong> Monthly measurements vs daily weight obsession</li>
+                    </ul>
+                </div>
+
+                <div class="priority-section">
+                    <h4>9️⃣ Post-Surgical Monitoring</h4>
+                    <p>Given spinal fusion and cervical disc history:</p>
+                    <ul>
+                        <li><strong>Position audits:</strong> Document neck/back comfort during 2+ hour sessions</li>
+                        <li><strong>Strength maintenance:</strong> 2x/week core stability work (15-20 min sessions)</li>
+                        <li><strong>Warning signs:</strong> Any radiating pain, numbness, or positional intolerance requires immediate medical consultation</li>
+                        <li><strong>Equipment fit:</strong> Consider professional bike fit reassessment if &gt;2h sessions create structural discomfort</li>
+                    </ul>
+                </div>
+
+                <h3>🔮 LONG-TERM DEVELOPMENT (Beyond Current Race Season)</h3>
+
+                <div class="recommendation-grid">
+                    <div class="recommendation-card">
+                        <h4>🔟 Pattern Interruption Strategy</h4>
+                        <p>Your historical pattern shows training "islands" followed by collapse. To break this:</p>
+                        <ul>
+                            <li><strong>Identity shift:</strong> Reframe from "I train hard when motivated" to "I train consistently regardless of motivation"</li>
+                            <li><strong>Minimum standards:</strong> Establish non-negotiable minimums (3x/week, 30 min minimum sessions)</li>
+                            <li><strong>Flexibility protocols:</strong> Create "life happens" contingency plans (travel workouts, time-crunched options)</li>
+                            <li><strong>Accountability structure:</strong> Weekly check-ins with coach or training partner to maintain consistency</li>
+                        </ul>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <h4>1️⃣1️⃣ Sleep Optimization Program</h4>
+                        <p>Invest in sleep architecture improvement:</p>
+                        <ul>
+                            <li><strong>Sleep study consideration:</strong> Given REM suppression pattern, rule out sleep disorders (apnea, PLMD)</li>
+                            <li><strong>Environment optimization:</strong> Room temperature 65-68°F, blackout conditions, white noise</li>
+                            <li><strong>Supplement assessment:</strong> Magnesium glycinate (300-400mg), consider melatonin timing (0.5-1mg, 90 min pre-bed)</li>
+                            <li><strong>Caffeine management:</strong> No caffeine after 2pm, taper total daily intake if &gt;300mg</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Performance Outlook -->
+            <section class="section">
+                <h2>🔮 PERFORMANCE OUTLOOK</h2>
+
+                <h3>Current State Assessment:</h3>
+                <p>You possess strong workout execution capabilities, demonstrated endurance capacity, and stable baseline fitness. However, you're operating in a fragile state where training load exceeds recovery capacity, sleep architecture is compromised, and physiological stress markers indicate incomplete adaptation. The current trajectory is unsustainable and increases injury risk—particularly concerning given your post-surgical status.</p>
+
+                <h3>Realistic Race Readiness Projections:</h3>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Sprint Series Race 1</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">73 days</div>
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">B-priority</p>
+                        <div class="callout callout-warning" style="margin-top: 1rem; text-align: left; font-size: 0.875rem;">
+                            <strong>Current trajectory:</strong> 40% probability of quality performance<br>
+                            <strong>With adjustments:</strong> 75% probability<br>
+                            <p style="margin-top: 0.5rem;">Target of 1:15:00 is achievable if next 8 weeks focus on consistent volume and threshold development</p>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Sasquatch Duro</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">95 days</div>
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">A-priority</p>
+                        <div class="callout callout-warning" style="margin-top: 1rem; text-align: left; font-size: 0.875rem;">
+                            <strong>Current trajectory:</strong> 25% probability of successful 3-hour completion<br>
+                            <strong>With adjustments:</strong> 65% probability<br>
+                            <p style="margin-top: 0.5rem;">Requires strict adherence to build phases, particularly endurance volume development in March</p>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Royal Gorge 6</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">124 days</div>
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">A-priority</p>
+                        <div class="callout callout-danger" style="margin-top: 1rem; text-align: left; font-size: 0.875rem;">
+                            <strong>Current trajectory:</strong> 15% probability of 6-hour completion without distress<br>
+                            <strong>With adjustments:</strong> 55% probability<br>
+                            <p style="margin-top: 0.5rem;">Most dependent on achieving consistent training weeks; current "island" pattern makes 6-hour events extremely challenging</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-info">
+                    <strong>🎯 The Gap to Close:</strong>
+                    <p>You need to increase chronic training load from <strong>270 to 450+</strong> (67% increase) while simultaneously improving recovery quality, maintaining workout consistency, and avoiding injury. This is achievable in 17 weeks, but requires prioritizing consistency over intensity for the next 4-6 weeks.</p>
+                </div>
+            </section>
+
+            <!-- Conclusion -->
+            <section class="section conclusion">
+                <h2>🎯 CONCLUSION: THE PATH FORWARD</h2>
+
+                <p>Your data tells the story of an athlete with impressive physical capabilities undermined by unsustainable training patterns and insufficient recovery practices. You can execute high-quality workouts, sustain 3-hour efforts, and demonstrate technical discipline—but these strengths are being squandered through boom-bust load management, chronic sleep debt, and inadequate hydration.</p>
+
+                <div class="callout callout-success" style="background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3);">
+                    <strong>✅ The good news:</strong>
+                    <p style="color: rgba(255, 255, 255, 0.95);">Every problem identified has a clear, actionable solution. Your baseline fitness is protected, your execution quality is strong, and you have sufficient time to prepare for your race season if you act now.</p>
+                </div>
+
+                <div class="callout callout-danger" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5);">
+                    <strong>⚠️ The reality:</strong>
+                    <p style="color: rgba(255, 255, 255, 0.95);">Continuing your current pattern will result in injury, illness, or burnout before reaching your A-priority events. The ACWR of 2.4-2.7 isn't sustainable, the sleep debt isn't manageable, and the load volatility prevents the consistent adaptation required for 3-6 hour endurance events.</p>
+                </div>
+
+                <div class="callout callout-info" style="background: rgba(37, 99, 235, 0.2); border-color: rgba(37, 99, 235, 0.5);">
+                    <strong>🚀 The opportunity:</strong>
+                    <p style="color: rgba(255, 255, 255, 0.95);">Embrace consistency over heroism. The next 4 weeks should be characterized by boring, sustainable, gradually progressive training with obsessive attention to sleep, hydration, and recovery markers. Build the foundation now, and the fitness will follow.</p>
+                </div>
+
+                <p style="font-size: 1.25rem; font-weight: 600; margin-top: 2rem; text-align: center;">You have the engine. Now build the support systems that allow it to run reliably.</p>
+
+                <hr style="border-color: rgba(255, 255, 255, 0.2); margin: 2rem 0;">
+
+                <p style="text-align: center;"><strong>Next Assessment Recommended:</strong> February 7, 2026 (30 days)<br>
+                <em>To evaluate load progression, physiological marker trends, and Phase 1 completion readiness.</em></p>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>📊 Athlete Performance Report | Generated January 7, 2026 | Confidential</p>
+        </footer>
+    </div>
+</body>
+</html>
+```

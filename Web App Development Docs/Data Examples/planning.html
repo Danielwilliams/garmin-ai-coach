@@ -1,0 +1,987 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daniel Williams - Training Plan 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.5;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 30px 40px;
+            border-bottom: 4px solid #667eea;
+        }
+        
+        header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        header .meta {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .goals {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .goal-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .goal-badge.primary {
+            background: #667eea;
+            border-color: #667eea;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 50px;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #2d3748;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .phases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .phase-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .phase-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .phase-card h3 {
+            font-size: 1.1em;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .phase-card .phase-weeks {
+            font-size: 0.85em;
+            color: #718096;
+            margin-bottom: 10px;
+        }
+        
+        .phase-card .phase-focus {
+            font-size: 0.9em;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        
+        .zones-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .zones-table thead {
+            background: #2d3748;
+            color: white;
+        }
+        
+        .zones-table th,
+        .zones-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .zones-table tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .zones-table tbody tr:hover {
+            background: #f7fafc;
+        }
+        
+        .zones-table .zone-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        
+        .z1 { background: #c6f6d5; color: #22543d; }
+        .z2 { background: #bee3f8; color: #2c5282; }
+        .z3 { background: #feebc8; color: #7c2d12; }
+        .z4 { background: #fed7d7; color: #742a2a; }
+        .z5 { background: #fbb6ce; color: #702459; }
+        
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .week-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .week-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+        
+        .week-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+        }
+        
+        .week-header h3 {
+            font-size: 1.3em;
+            margin-bottom: 5px;
+        }
+        
+        .week-header .week-meta {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+        
+        .week-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+        
+        .day-list {
+            padding: 0;
+        }
+        
+        .day-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px 20px;
+            transition: background 0.2s;
+        }
+        
+        .day-item:last-child {
+            border-bottom: none;
+        }
+        
+        .day-item:hover {
+            background: #f7fafc;
+        }
+        
+        .day-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .day-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .day-title {
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 1.05em;
+        }
+        
+        .day-focus {
+            color: #667eea;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        .workout-details {
+            margin-left: 30px;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+        
+        .workout-label {
+            font-weight: 600;
+            color: #2d3748;
+            display: inline-block;
+            min-width: 80px;
+        }
+        
+        .workout-tss {
+            display: inline-block;
+            background: #edf2f7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #667eea;
+            margin-left: 10px;
+        }
+        
+        .adaptation-note {
+            background: #fffaf0;
+            border-left: 3px solid #f6ad55;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #744210;
+            border-radius: 4px;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 2px solid #cbd5e0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .summary-box h3 {
+            font-size: 1.4em;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .summary-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .summary-item h4 {
+            font-size: 0.9em;
+            color: #718096;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .summary-item .value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .reminders-box {
+            background: #fff5f5;
+            border: 2px solid #feb2b2;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .reminders-box h3 {
+            color: #c53030;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .reminders-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .reminders-box li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #742a2a;
+            font-size: 0.95em;
+        }
+        
+        .reminders-box li:before {
+            content: "⚠";
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            header {
+                padding: 20px;
+            }
+            
+            header h1 {
+                font-size: 1.6em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .phases-grid,
+            .week-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .goals {
+                flex-direction: column;
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+            
+            .week-card {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Daniel Williams</h1>
+            <div class="meta">Season Plan: January 7 – May 16, 2026 (19.4 weeks)</div>
+            <div class="goals">
+                <div class="goal-badge primary">🎯 PRIMARY: Royal Gorge 6hr MTB (May 16)</div>
+                <div class="goal-badge">Sasquatch Duro (Apr 11)</div>
+                <div class="goal-badge">Sprint Series (Mar 20)</div>
+            </div>
+        </header>
+        
+        <div class="content">
+            <!-- Season Overview -->
+            <section class="section">
+                <h2 class="section-title">Season Plan Overview</h2>
+                
+                <div class="phases-grid">
+                    <div class="phase-card">
+                        <h3>Phase 1: Stabilization</h3>
+                        <div class="phase-weeks">Weeks 1-4 | Jan 7 – Feb 3</div>
+                        <div class="phase-focus">Build consistency floor (4-5 days/week), eliminate training gaps, target chronic load 270→320. Sleep prioritization: >6.5h avg, zero-REM elimination.</div>
+                    </div>
+                    
+                    <div class="phase-card">
+                        <h3>Phase 2: Aerobic Base</h3>
+                        <div class="phase-weeks">Weeks 5-9 | Feb 4 – Mar 10</div>
+                        <div class="phase-focus">Expand aerobic capacity, extend rides to 3.5-4hr, address VO2max plateau. Chronic load: 320→380 with 3:1 recovery cycles.</div>
+                    </div>
+                    
+                    <div class="phase-card">
+                        <h3>Phase 3: Build</h3>
+                        <div class="phase-weeks">Weeks 10-13 | Mar 11 – Apr 8</div>
+                        <div class="phase-focus">Race-specific intensity for Sprint Series + Sasquatch. VO2max intervals 2x/week, peak chronic load 380-400. Sprint Series Race (Week 12).</div>
+                    </div>
+                    
+                    <div class="phase-card">
+                        <h3>Phase 4: Specific Prep</h3>
+                        <div class="phase-weeks">Weeks 14-17 | Apr 9 – May 6</div>
+                        <div class="phase-focus">Royal Gorge simulation: 4-5hr MTB at race IF, back-to-back long days. Sasquatch Duro race (Week 14). 2:1 load:recovery pattern.</div>
+                    </div>
+                    
+                    <div class="phase-card">
+                        <h3>Phase 5: Taper</h3>
+                        <div class="phase-weeks">Weeks 18-19 | May 7 – May 15</div>
+                        <div class="phase-focus">Reduce volume 40-60%, maintain intensity anchors. Sleep 7.5h+ target, arrive fresh with RHR <48, HRV >58.</div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Intensity Zones -->
+            <section class="section">
+                <h2 class="section-title">Intensity Zones (FTP-Based)</h2>
+                
+                <table class="zones-table">
+                    <thead>
+                        <tr>
+                            <th>Zone</th>
+                            <th>Name</th>
+                            <th>% FTP</th>
+                            <th>HR Guide</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="zone-badge z1">Z1</span></td>
+                            <td>Active Recovery</td>
+                            <td>&lt;55%</td>
+                            <td>&lt;68%</td>
+                            <td>Flush, mobility</td>
+                        </tr>
+                        <tr>
+                            <td><span class="zone-badge z2">Z2</span></td>
+                            <td>Aerobic Base</td>
+                            <td>56-75%</td>
+                            <td>69-83%</td>
+                            <td>Fat oxidation, mitochondrial density</td>
+                        </tr>
+                        <tr>
+                            <td><span class="zone-badge z3">Z3</span></td>
+                            <td>Tempo</td>
+                            <td>76-90%</td>
+                            <td>84-94%</td>
+                            <td>Lactate clearance, race pace</td>
+                        </tr>
+                        <tr>
+                            <td><span class="zone-badge z4">Z4</span></td>
+                            <td>Threshold</td>
+                            <td>91-105%</td>
+                            <td>95-105%</td>
+                            <td>FTP improvement, sustained power</td>
+                        </tr>
+                        <tr>
+                            <td><span class="zone-badge z5">Z5</span></td>
+                            <td>VO2max</td>
+                            <td>106-120%</td>
+                            <td>&gt;106%</td>
+                            <td>Aerobic capacity ceiling</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- 4-Week Detailed Plan -->
+            <section class="section">
+                <h2 class="section-title">4-Week Training Plan</h2>
+                
+                <div class="week-grid">
+                    <!-- Week 1 -->
+                    <div class="week-card">
+                        <div class="week-header">
+                            <h3>Week 1</h3>
+                            <div class="week-meta">Jan 7-13 | Stabilization + Recovery Consolidation</div>
+                            <div class="week-stats">
+                                <span class="stat-badge">220-280 TSS</span>
+                                <span class="stat-badge">ACWR Reduction</span>
+                            </div>
+                        </div>
+                        
+                        <div class="day-list">
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-wed" name="w1-wed" value="done">
+                                    <label for="w1-wed" class="day-title">WED, Jan 7</label>
+                                    <span class="day-focus">Active Recovery</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 45min outdoor easy spin, Z1-Z2 cap (HR &lt;140) <span class="workout-tss">~25 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Flush residual fatigue from Jan 6</div>
+                                    <div class="adaptation-note">⚠ If sleep &lt;6h → reduce to 30min or rest. If RHR &gt;52 → complete rest.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-thu" name="w1-thu" value="done">
+                                    <label for="w1-thu" class="day-title">THU, Jan 8</label>
+                                    <span class="day-focus">Endurance Foundation</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 90min outdoor MTB, Z2 steady (IF 0.68-0.72) <span class="workout-tss">~75 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Re-establish weekly long ride rhythm, technical skills</div>
+                                    <div class="adaptation-note">⚠ If fatigued → reduce to 75min, stay Z2. If sleep score &lt;60 → postpone to Friday.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-fri" name="w1-fri" value="done">
+                                    <label for="w1-fri" class="day-title">FRI, Jan 9</label>
+                                    <span class="day-focus">Rest / Mobility</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> OFF or 20min easy spin + stretching <span class="workout-tss">0-10 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Protect adaptation, prioritize sleep quality</div>
+                                    <div class="adaptation-note">⚠ If restless sleep (&gt;80 movements) → add 10min cold plunge.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-sat" name="w1-sat" value="done">
+                                    <label for="w1-sat" class="day-title">SAT, Jan 10</label>
+                                    <span class="day-focus">Long Endurance</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 2.5-3hr outdoor MTB, Z2-low Z3 (IF 0.70-0.75) <span class="workout-tss">~160-180 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Aerobic base expansion, duration tolerance for Royal Gorge</div>
+                                    <div class="adaptation-note">⚠ If RHR &gt;51 → cap at 2hr, strict Z2. Hydrate 0.75L (mandatory log).</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-sun" name="w1-sun" value="done">
+                                    <label for="w1-sun" class="day-title">SUN, Jan 11</label>
+                                    <span class="day-focus">Active Recovery</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 60min outdoor easy spin, Z1 only (HR &lt;130) <span class="workout-tss">~30 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Facilitate recovery, maintain consistency habit</div>
+                                    <div class="adaptation-note">⚠ If legs heavy → reduce to 40min or 15min walk.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-mon" name="w1-mon" value="done">
+                                    <label for="w1-mon" class="day-title">MON, Jan 12</label>
+                                    <span class="day-focus">Rest</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> Complete rest day <span class="workout-tss">0 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> 48hr recovery post-weekend, autonomic restoration</div>
+                                    <div class="adaptation-note">⚠ Stress management (&lt;30 avg today). Sleep &gt;7h target.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w1-tue" name="w1-tue" value="done">
+                                    <label for="w1-tue" class="day-title">TUE, Jan 13</label>
+                                    <span class="day-focus">Threshold Block</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 75min: 15' WU → 3x(12' Z4 @ IF 0.88-0.92, 5' easy) → 10' CD <span class="workout-tss">~90-100 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Quality intensity within recovery window, threshold maintenance</div>
+                                    <div class="adaptation-note">⚠ If sleep &lt;6h or RHR &gt;52 → convert to 60min Z2. Hydrate 0.5L.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Week 2 -->
+                    <div class="week-card">
+                        <div class="week-header">
+                            <h3>Week 2</h3>
+                            <div class="week-meta">Jan 14-20 | Consistency Anchoring</div>
+                            <div class="week-stats">
+                                <span class="stat-badge">280-340 TSS</span>
+                                <span class="stat-badge">HRV >50ms</span>
+                            </div>
+                        </div>
+                        
+                        <div class="day-list">
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-wed" name="w2-wed" value="done">
+                                    <label for="w2-wed" class="day-title">WED, Jan 14</label>
+                                    <span class="day-focus">Aerobic Base</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 90min outdoor MTB, Z2 steady (IF 0.68-0.72) + technical features <span class="workout-tss">~75-85 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Aerobic stimulus, technical skill reinforcement</div>
+                                    <div class="adaptation-note">⚠ If HRV &lt;48 → reduce to 60min Z1-Z2. Bad weather → Zwift 60min Z2 (accept risk).</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-thu" name="w2-thu" value="done">
+                                    <label for="w2-thu" class="day-title">THU, Jan 15</label>
+                                    <span class="day-focus">Active Recovery</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 45min easy spin, Z1 only <span class="workout-tss">~25 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Buffer between quality sessions</div>
+                                    <div class="adaptation-note">⚠ If sleep score &lt;65 → rest day instead.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-fri" name="w2-fri" value="done">
+                                    <label for="w2-fri" class="day-title">FRI, Jan 16</label>
+                                    <span class="day-focus">Zwift Intervals</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 60min: 15' WU → 5x(3' Z5 @ 110-115% FTP, 3' easy) → 12' CD <span class="workout-tss">~70-80 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> VO2max stimulus to address 43-46 plateau</div>
+                                    <div class="adaptation-note">⚠ If flat → reduce to 4 intervals. Terminate early if can't hold power.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-sat" name="w2-sat" value="done">
+                                    <label for="w2-sat" class="day-title">SAT, Jan 17</label>
+                                    <span class="day-focus">Long Endurance</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 3-3.5hr outdoor MTB, Z2-tempo (IF 0.70-0.76) + 5x 90sec Z3 surges <span class="workout-tss">~180-200 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Extend duration ceiling toward 4hr capacity</div>
+                                    <div class="adaptation-note">⚠ If RHR &gt;51 → cap at 2.5hr, no surges. Hydration: 0.75-1L logged.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-sun" name="w2-sun" value="done">
+                                    <label for="w2-sun" class="day-title">SUN, Jan 18</label>
+                                    <span class="day-focus">Recovery Spin</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 60min outdoor easy, Z1-low Z2 (HR &lt;135) <span class="workout-tss">~35 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Active recovery from long ride, consistency habit</div>
+                                    <div class="adaptation-note">⚠ If restlessness &gt;80 movements → 30min only or rest.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-mon" name="w2-mon" value="done">
+                                    <label for="w2-mon" class="day-title">MON, Jan 19</label>
+                                    <span class="day-focus">Rest</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> Complete rest day <span class="workout-tss">0 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Parasympathetic recharge, sleep &gt;7h target</div>
+                                    <div class="adaptation-note">⚠ Cold plunge 8min if DOMS present.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w2-tue" name="w2-tue" value="done">
+                                    <label for="w2-tue" class="day-title">TUE, Jan 20</label>
+                                    <span class="day-focus">Tempo Threshold</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 90min: 15' WU → 2x(20' Z4 @ IF 0.88-0.92, 8' easy) → 10' Z3 → 7' CD <span class="workout-tss">~100-110 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Extend threshold duration toward 70-90min blocks</div>
+                                    <div class="adaptation-note">⚠ If sleep &lt;6h → reduce to 1x20' Z4. Hydrate 0.5L.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Week 3 -->
+                    <div class="week-card">
+                        <div class="week-header">
+                            <h3>Week 3</h3>
+                            <div class="week-meta">Jan 21-27 | Aerobic Expansion</div>
+                            <div class="week-stats">
+                                <span class="stat-badge">320-380 TSS</span>
+                                <span class="stat-badge">Volume Emphasis</span>
+                            </div>
+                        </div>
+                        
+                        <div class="day-list">
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-wed" name="w3-wed" value="done">
+                                    <label for="w3-wed" class="day-title">WED, Jan 21</label>
+                                    <span class="day-focus">Endurance + Tempo</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 2hr outdoor MTB: 90min Z2 → 20min Z3 tempo (IF 0.85-0.88) → 10' easy <span class="workout-tss">~110-120 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Volume with tempo finish, race-pace specificity</div>
+                                    <div class="adaptation-note">⚠ If RHR &gt;52 → skip tempo, pure Z2. If sleep score &lt;60 → reduce to 90min Z2.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-thu" name="w3-thu" value="done">
+                                    <label for="w3-thu" class="day-title">THU, Jan 22</label>
+                                    <span class="day-focus">Active Recovery</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 45min outdoor Z1 spin <span class="workout-tss">~25 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Facilitate recovery from tempo block</div>
+                                    <div class="adaptation-note">⚠ If HRV &lt;48 → rest day.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-fri" name="w3-fri" value="done">
+                                    <label for="w3-fri" class="day-title">FRI, Jan 23</label>
+                                    <span class="day-focus">Zwift VO2max</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 65min: 15' WU → 6x(3' Z5 @ 110-115%, 3' easy) → 12' CD <span class="workout-tss">~75-85 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Continue VO2max stimulus (Week 2 progression)</div>
+                                    <div class="adaptation-note">⚠ If can't complete 6 intervals → stop at 5, adjust next week.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-sat" name="w3-sat" value="done">
+                                    <label for="w3-sat" class="day-title">SAT, Jan 24</label>
+                                    <span class="day-focus">Long Endurance</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 3.5-4hr outdoor MTB, Z2-tempo (IF 0.70-0.75) + technical features <span class="workout-tss">~200-220 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Approach race duration, aerobic base volume peak</div>
+                                    <div class="adaptation-note">⚠ If RHR &gt;51 or sleep &lt;6h → cap at 3hr. Mandatory hydration: 1L logged. DO NOT substitute indoor.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-sun" name="w3-sun" value="done">
+                                    <label for="w3-sun" class="day-title">SUN, Jan 25</label>
+                                    <span class="day-focus">Recovery Spin</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 75min outdoor easy, Z1-low Z2 (HR &lt;138) <span class="workout-tss">~40-45 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Extended active recovery to support mega-volume</div>
+                                    <div class="adaptation-note">⚠ If legs dead → reduce to 45min or rest. Monitor stress avg &gt;40 today.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-mon" name="w3-mon" value="done">
+                                    <label for="w3-mon" class="day-title">MON, Jan 26</label>
+                                    <span class="day-focus">Rest</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> Complete rest day <span class="workout-tss">0 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Mandatory recovery post-big weekend, sleep &gt;7h and stress &lt;30</div>
+                                    <div class="adaptation-note">⚠ If restless sleep &gt;80 movements → 10min cold plunge.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w3-tue" name="w3-tue" value="done">
+                                    <label for="w3-tue" class="day-title">TUE, Jan 27</label>
+                                    <span class="day-focus">Threshold Block</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 85min: 15' WU → 3x(15' Z4 @ IF 0.88-0.92, 6' easy) → 7' CD <span class="workout-tss">~100-110 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Maintain threshold, extend intervals toward 20min targets</div>
+                                    <div class="adaptation-note">⚠ If sleep &lt;6h or RHR &gt;52 → convert to 75min Z2. Hydrate 0.5L.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Week 4 -->
+                    <div class="week-card">
+                        <div class="week-header">
+                            <h3>Week 4</h3>
+                            <div class="week-meta">Jan 28-Feb 3 | Consolidation + Recovery</div>
+                            <div class="week-stats">
+                                <span class="stat-badge">200-260 TSS</span>
+                                <span class="stat-badge">3:1 Recovery</span>
+                            </div>
+                        </div>
+                        
+                        <div class="day-list">
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-wed" name="w4-wed" value="done">
+                                    <label for="w4-wed" class="day-title">WED, Jan 28</label>
+                                    <span class="day-focus">Aerobic Maintenance</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 90min outdoor MTB, strict Z2 (IF 0.68-0.72), smooth terrain <span class="workout-tss">~70-80 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Maintain aerobic stimulus, absorb previous 3 weeks</div>
+                                    <div class="adaptation-note">⚠ If fatigued → reduce to 60min. No intensity regardless of feel.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-thu" name="w4-thu" value="done">
+                                    <label for="w4-thu" class="day-title">THU, Jan 29</label>
+                                    <span class="day-focus">Recovery</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 40min easy spin, Z1 only <span class="workout-tss">~20 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Minimal movement between endurance sessions</div>
+                                    <div class="adaptation-note">⚠ If sleep score &lt;65 → rest day.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-fri" name="w4-fri" value="done">
+                                    <label for="w4-fri" class="day-title">FRI, Jan 30</label>
+                                    <span class="day-focus">Skills + Easy Volume</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 75min outdoor MTB, Z1-Z2 (IF &lt;0.70), technical/cornering drills <span class="workout-tss">~50-55 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Low-stress skills work, Royal Gorge technical prep</div>
+                                    <div class="adaptation-note">⚠ If HRV &lt;50 → reduce to 60min Z1 only.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-sat" name="w4-sat" value="done">
+                                    <label for="w4-sat" class="day-title">SAT, Jan 31</label>
+                                    <span class="day-focus">Moderate Endurance</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 2hr outdoor MTB, Z2 steady (IF 0.68-0.72) <span class="workout-tss">~110-120 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Reduced weekend volume, consolidation priority</div>
+                                    <div class="adaptation-note">⚠ If RHR &gt;50 → cap at 90min. If feeling strong, DO NOT extend (recovery discipline).</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-sun" name="w4-sun" value="done">
+                                    <label for="w4-sun" class="day-title">SUN, Feb 1</label>
+                                    <span class="day-focus">Active Recovery</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 60min outdoor easy spin, Z1 (HR &lt;130) <span class="workout-tss">~30 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Facilitate recovery without complete rest</div>
+                                    <div class="adaptation-note">⚠ If legs fresh → maintain 60min but stay strictly Z1. If tired → 40min or rest.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-mon" name="w4-mon" value="done">
+                                    <label for="w4-mon" class="day-title">MON, Feb 2</label>
+                                    <span class="day-focus">Rest</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> Complete rest day <span class="workout-tss">0 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Sleep &gt;7.5h target, autonomic restoration before Phase 2</div>
+                                    <div class="adaptation-note">⚠ Cold plunge optional if stress avg &gt;35 over last 3 days.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="day-item">
+                                <div class="day-header">
+                                    <input type="checkbox" class="day-checkbox" id="w4-tue" name="w4-tue" value="done">
+                                    <label for="w4-tue" class="day-title">TUE, Feb 3</label>
+                                    <span class="day-focus">Threshold Opener</span>
+                                </div>
+                                <div class="workout-details">
+                                    <div><span class="workout-label">Workout:</span> 60min: 15' WU → 2x(10' Z4 @ IF 0.88-0.90, 5' easy) → 10' CD <span class="workout-tss">~65-70 TSS</span></div>
+                                    <div><span class="workout-label">Purpose:</span> Brief quality stimulus, prep for Week 5 build</div>
+                                    <div class="adaptation-note">⚠ If sleep &lt;6h → skip, rest instead. This is optional sharpener, not mandatory.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 28-Day Summary -->
+                <div class="summary-box">
+                    <h3>28-Day Performance Summary</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <h4>Total Load</h4>
+                            <div class="value">1,760-2,010 TSS</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Chronic Load Progression</h4>
+                            <div class="value">270 → 310-330</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Outdoor Sessions</h4>
+                            <div class="value">20 of 24 days (83%)</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Key Milestones</h4>
+                            <div class="value">4hr MTB completed</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Critical Reminders -->
+                <div class="reminders-box">
+                    <h3>Critical Non-Negotiables</h3>
+                    <ul>
+                        <li>Sleep &lt;6h = next-day intensity capped at Z2 or rest</li>
+                        <li>RHR &gt;52 for 2+ days = force recovery week early</li>
+                        <li>Zero-REM night = immediate next-day rest or Z1 only</li>
+                        <li>Hydration logging mandatory on all sessions &gt;60min</li>
+                        <li>Indoor sessions: complete prescribed intervals OR stop early if power unsustainable</li>
+                        <li>Training gaps &gt;2 consecutive days trigger phase regression</li>
+                        <li>Outdoor long rides cannot be substituted with indoor during critical phases</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>
+```

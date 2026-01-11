@@ -29,8 +29,10 @@ pwd_context = CryptContext(
     argon2__rounds=4,
     argon2__memory_cost=65536,  # 64 MB
     argon2__parallelism=1,
-    # Scrypt fallback configuration
-    scrypt__rounds=32768,
+    # Scrypt fallback configuration (rounds is exponent, not iterations)
+    scrypt__rounds=14,  # 2^14 = 16384 iterations
+    scrypt__min_rounds=12,  # 2^12 = 4096 minimum
+    scrypt__max_rounds=16,  # 2^16 = 65536 maximum
     scrypt__block_size=8,
     scrypt__parallelism=1,
     # PBKDF2 fallback configuration
