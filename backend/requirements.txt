@@ -37,7 +37,7 @@ email-validator==2.1.0
 jinja2==3.1.2
 markdown==3.5.1
 
-# AI and LangGraph workflow system (exact CLI dependencies)
+# AI and LangGraph workflow system
 langgraph==0.2.28
 langchain==0.3.1
 langchain-core==0.3.6
@@ -48,14 +48,13 @@ anthropic==0.39.0
 
 # Background processing
 celery==5.3.4
-redis==5.0.1
 
 # Data visualization and plotting
 plotly==5.17.0
 kaleido==0.2.1
 
 # Garmin Connect integration
-garmin-connect==0.2.19
+garminconnect>=0.2.0
 aiohttp==3.9.1
 
 # Scientific computing for data analysis
@@ -63,10 +62,6 @@ numpy==1.24.3
 pandas==2.0.3
 scipy==1.11.1
 
-# Configuration and utilities
-pydantic-settings==2.1.0
-python-dotenv==1.0.0
-
 # Additional AI providers
 google-generativeai==0.8.2
-deepseek-api==1.0.0
+langchain-google-genai==2.0.1
