@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 async def activity_summarizer_node(state: TrainingAnalysisState) -> TrainingAnalysisState:
     """Activity summarizer node for LangGraph workflow."""
     
-    logger.info(f"<�B Starting activity pattern analysis...")
+    logger.info("🏃 Starting activity pattern analysis...")
     
     try:
         # Update progress
@@ -58,7 +58,7 @@ async def activity_summarizer_node(state: TrainingAnalysisState) -> TrainingAnal
         )
         state = add_token_usage(state, "activity_summarizer", token_usage)
         
-        logger.info(f" Activity analysis completed")
+        logger.info("✅ Activity analysis completed")
         return state
         
     except Exception as e:
