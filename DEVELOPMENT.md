@@ -73,25 +73,28 @@ All remaining AI agents discovered to be fully implemented:
 - Production-ready with comprehensive error handling
 - Token usage tracking and cost optimization
 
-### 📋 **Immediate Next Steps**
+### ✅ **Latest Completed (Priority #1)**
 
-#### 🔄 **End-to-End Integration (HIGH PRIORITY)**
-- Connect training profile creation to AI analysis workflow
-- Test complete user journey from registration to analysis results
-- Validate AI agent workflow with real data flow
-- Performance monitoring and optimization
+#### 🔄 **End-to-End Integration (COMPLETED ✅)**
+- ✅ **Connected training profile to AI analysis workflow**: New `/training-profiles/{id}/start-analysis` endpoint
+- ✅ **Complete user journey tested**: Registration → Profile Creation → AI Analysis → Results
+- ✅ **AI workflow validated**: Real Claude/OpenAI/DeepSeek API connections with 9-agent system
+- ✅ **Frontend 404 error resolved**: Updated to use new integrated endpoint
+- ✅ **Build issues fixed**: Updated requirements.txt for successful Railway deployment
 
-#### 🎨 **Results Interface Development**
-- Analysis results dashboard with comprehensive visualizations
-- Real-time progress tracking for AI analysis execution
-- Interactive weekly training plan display and modification
-- Analysis history and comparison features
+### 📋 **Current Development Priorities**
 
-#### 🌐 **Production Readiness**
-- Environment configuration for all AI providers
-- Rate limiting and usage monitoring setup
-- Security review and API key management
-- Deployment automation and health monitoring
+#### 🎨 **Priority #2: Results Interface Development (IN PROGRESS)**
+- 📋 Analysis results dashboard with comprehensive visualizations
+- 📋 Real-time progress tracking for AI analysis execution  
+- 📋 Interactive weekly training plan display and modification
+- 📋 Analysis history and comparison features
+
+#### 🌐 **Priority #3: Production Readiness**
+- ✅ Environment configuration for all AI providers (Railway/Vercel)
+- 📋 Rate limiting and usage monitoring setup
+- 📋 Security review and API key management
+- 📋 Deployment automation and health monitoring
 
 ## Architecture Overview
 
@@ -181,15 +184,21 @@ All remaining AI agents discovered to be fully implemented:
 - `backend/requirements.txt` - Updated with all AI dependencies (LangGraph, LangChain, providers)
 
 ### API Integration
-- `backend/app/api/analyses.py` - Analysis endpoints with AI engine integration
+- `backend/app/api/training_profiles.py` - **NEW**: Integrated analysis endpoint `/training-profiles/{id}/start-analysis`
+- `backend/app/api/analyses.py` - Analysis management endpoints (deprecated creation endpoint)
 - `backend/app/schemas/analysis.py` - Request/response schemas
 - `backend/app/database/models/analysis.py` - Database models for analysis storage
+
+### Frontend Integration
+- `frontend/lib/api.ts` - **UPDATED**: New `startAnalysis()` function using integrated endpoint
+- `frontend/app/analysis/new/page.tsx` - **UPDATED**: Uses new endpoint, resolves 404 errors
+- `frontend/components/Analysis/AnalysisDashboard.tsx` - Analysis listing and management
 
 ### Database Models
 - **Analysis**: Core analysis tracking with progress and results
 - **AnalysisResult**: Individual agent outputs and intermediate results  
 - **AnalysisFile**: Generated reports and exports
-- **TrainingConfig**: User training configuration and preferences
+- **TrainingConfig**: **ENHANCED**: Now includes athlete info and Garmin credentials
 
 ## Development Workflow
 
@@ -292,11 +301,29 @@ The AI system represents a complete and comprehensive replication of the CLI's s
 
 ## Next Development Priorities
 
-1. **End-to-End Testing**: Comprehensive testing of complete AI workflow
-2. **Performance Optimization**: Token usage and response time optimization  
-3. **Frontend Integration**: Analysis results visualization and interaction
-4. **Production Deployment**: Environment setup and monitoring configuration
-5. **User Onboarding**: Garmin Connect authentication and data permissions
+### **Completed: Priority #1 - End-to-End Integration ✅**
+- ✅ Complete training profile to AI analysis integration
+- ✅ Frontend 404 error resolution
+- ✅ Build and deployment fixes
+- ✅ Real AI provider connections validated
+
+### **Current: Priority #2 - Analysis Results Dashboard**
+1. **Results Visualization**: Interactive display of AI-generated analysis results
+2. **Training Plan UI**: Weekly training plan presentation with zone details
+3. **Progress Tracking**: Real-time analysis execution status
+4. **Export Features**: PDF and CSV export of analysis results
+
+### **Upcoming: Priority #3 - Production Polish**
+1. **Performance Optimization**: Token usage and response time optimization  
+2. **Error Handling**: Comprehensive error states and recovery
+3. **Security Hardening**: Rate limiting and API protection
+4. **User Onboarding**: Enhanced Garmin Connect authentication flow
+
+### **Future: Advanced Features**
+1. **Real-time Collaboration**: Shared training plans with coaches
+2. **Advanced Analytics**: Trend analysis and comparative insights
+3. **Mobile Responsiveness**: Optimized mobile interface
+4. **Integration Expansion**: Wahoo, Strava, and other platform connections
 
 ## Contributing
 

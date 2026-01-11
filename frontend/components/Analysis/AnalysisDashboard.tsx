@@ -33,8 +33,12 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ trainingProfiles 
     }
   };
 
-  const handleViewAnalysis = (analysisId: string) => {
-    router.push(`/analysis/${analysisId}`);
+  const handleViewAnalysis = (analysisId: string, status: string) => {
+    if (status === 'running' || status === 'pending') {
+      router.push(`/analysis/${analysisId}/progress`);
+    } else {
+      router.push(`/analysis/${analysisId}`);
+    }
   };
 
   const handleStartNewAnalysis = () => {
@@ -201,11 +205,11 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ trainingProfiles 
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewAnalysis(analysis.id)}
+                      onClick={() => handleViewAnalysis(analysis.id, analysis.status)}
                       className="flex items-center"
                     >
                       <Eye className="w-4 h-4 mr-1" />
-                      View
+                      {analysis.status === 'running' || analysis.status === 'pending' ? 'View Progress' : 'View Results'}
                     </Button>
                   </div>
                 </div>

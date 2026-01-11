@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import AnalysisDetailView from '@/components/Analysis/AnalysisDetailView';
+import AnalysisResultsDashboard from '@/components/Analysis/AnalysisResultsDashboard';
 
 interface AnalysisDetailPageProps {
   params: {
@@ -10,11 +10,7 @@ interface AnalysisDetailPageProps {
 }
 
 const AnalysisDetailPage: React.FC<AnalysisDetailPageProps> = ({ params }) => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AnalysisDetailView analysisId={params.id} />
-    </div>
-  );
+  return <AnalysisResultsDashboard analysisId={params.id} />;
 };
 
 export default AnalysisDetailPage;

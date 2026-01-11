@@ -63,8 +63,8 @@ const NewAnalysisPage: React.FC = () => {
       // Start AI analysis using the new integrated endpoint
       const analysisResponse = await trainingProfileAPI.startAnalysis(selectedProfile);
       
-      // Navigate to the analysis detail page
-      router.push(`/analysis/${analysisResponse.analysis_id}`);
+      // Navigate to the analysis progress page
+      router.push(`/analysis/${analysisResponse.analysis_id}/progress`);
       
     } catch (err: any) {
       setError(err.detail || 'Failed to start analysis');
