@@ -36,16 +36,28 @@ except ImportError as e:
     REPORT_GENERATOR_AVAILABLE = False
     report_generator = None
 
-# Import AI analysis engine
+# Import AI analysis engine with fallback
 try:
-    from app.services.ai.analysis_engine import analysis_engine
+    from app.services.ai.analysis_engine import AnalysisEngine
+    analysis_engine = AnalysisEngine()
     AI_ENGINE_AVAILABLE = True
+    print("✅ AI analysis engine loaded successfully")
 except ImportError as e:
     print(f"Warning: AI engine not available - {e}")
     AI_ENGINE_AVAILABLE = False
     analysis_engine = None
+except Exception as e:
+    print(f"Warning: AI engine initialization failed - {e}")
+    AI_ENGINE_AVAILABLE = False
+    analysis_engine = None
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
+
+# Debug endpoint
+@router.get("/debug")
+async def debug_endpoint():
+    """Debug endpoint to test if route registration is working."""
+    return {"status": "analyses router is working", "message": "Debug endpoint active"}
 
 
 @router.get("/", response_model=List[AnalysisSummary])

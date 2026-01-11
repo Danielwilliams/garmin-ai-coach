@@ -8,7 +8,17 @@ from fastapi.middleware.cors import CORSMiddleware
 # Database initialization removed - tables managed externally
 from app.api.auth import router as auth_router
 from app.api.training_profiles import router as training_profiles_router
-from app.api.analyses import router as analyses_router
+
+# Import analyses router with error handling
+try:
+    from app.api.analyses import router as analyses_router
+    ANALYSES_AVAILABLE = True
+    print("✅ Analyses router imported successfully")
+except ImportError as e:
+    print(f"❌ Failed to import analyses router: {e}")
+    ANALYSES_AVAILABLE = False
+    analyses_router = None
+
 from app.api.mock_data import router as mock_router
 
 
@@ -48,7 +58,14 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(training_profiles_router, prefix="/api/v1")
-app.include_router(analyses_router, prefix="/api/v1")
+
+# Include analyses router only if available
+if ANALYSES_AVAILABLE and analyses_router is not None:
+    app.include_router(analyses_router, prefix="/api/v1")
+    print("✅ Analyses router registered")
+else:
+    print("❌ Analyses router not available - skipping registration")
+
 app.include_router(mock_router, prefix="/api/v1")  # For testing dashboard
 
 # Root endpoint
