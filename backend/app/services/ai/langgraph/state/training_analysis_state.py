@@ -388,3 +388,10 @@ def validate_state_integrity(state: TrainingAnalysisState) -> List[str]:
             issues.append("End time before start time")
     
     return issues
+
+
+# === COMPATIBILITY ALIASES ===
+# These provide backward compatibility for different import names
+
+# Alias for backward compatibility
+initialize_analysis_state = create_initial_state

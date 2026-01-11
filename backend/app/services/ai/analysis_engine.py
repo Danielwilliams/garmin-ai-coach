@@ -58,14 +58,24 @@ class AnalysisEngine:
         # Load training configuration from database
         training_config = await self._load_training_config(training_config_id, db)
         
-        # Create initial analysis state
+        # Create initial analysis state with correct parameters
+        # Merge training config data into analysis config for state initialization
+        merged_config = {
+            **analysis_config,
+            "analysis_type": analysis_config.get("analysis_type", "full_analysis"),
+            "ai_mode": training_config.get("ai_mode", analysis_config.get("ai_mode", "development")),
+            "activities_days": training_config.get("activities_days", 21),
+            "metrics_days": training_config.get("metrics_days", 56),
+            "enable_plotting": training_config.get("enable_plotting", False),
+            "hitl_enabled": training_config.get("hitl_enabled", False),
+            "skip_synthesis": training_config.get("skip_synthesis", False),
+        }
+        
         initial_state = initialize_analysis_state(
             analysis_id=analysis_id,
             user_id=user_id,
             training_config_id=training_config_id,
-            analysis_type=analysis_config.get("analysis_type", "comprehensive"),
-            workflow_id=analysis_config.get("workflow_id", "training_analysis"),
-            training_config=training_config
+            analysis_config=merged_config
         )
         
         # Add training config data to state
