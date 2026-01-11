@@ -172,9 +172,9 @@ class AnalysisEngine:
                 status="running",
                 analysis_type=state["analysis_type"],
                 workflow_id=state["workflow_id"],
-                progress_percentage=0.0,
+                progress_percentage=0,
                 total_tokens=0,
-                estimated_cost=0.0,
+                estimated_cost="$0.00",
                 retry_count=0
             )
             
@@ -240,12 +240,12 @@ class AnalysisEngine:
                 .where(Analysis.id == analysis_id)
                 .values(
                     status="completed" if final_state.get("workflow_complete") else "failed",
-                    progress_percentage=progress.get("overall_percentage", 100.0),
+                    progress_percentage=int(progress.get("overall_percentage", 100)),
                     summary=final_state.get("synthesis_analysis"),
                     recommendations=self._extract_recommendations(final_state),
                     weekly_plan=final_state.get("weekly_training_plan"),
                     total_tokens=total_tokens,
-                    estimated_cost=total_cost,
+                    estimated_cost=f"${total_cost:.2f}" if total_cost > 0 else "$0.00",
                     end_date=final_state.get("end_time"),
                     error_message=None if final_state.get("workflow_complete") else "Workflow failed"
                 )
