@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
     print("👋 Shutting down...")
 
 
-# Create FastAPI app
+# Create FastAPI app  
 app = FastAPI(
     title="Garmin AI Coach API",
     description="AI-powered triathlon coaching platform with Garmin Connect integration",

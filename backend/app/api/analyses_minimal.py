@@ -11,7 +11,7 @@ from app.database.models.user import User
 from app.database.models.analysis import Analysis, AnalysisResult
 from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/analyses", tags=["analyses"])
+router = APIRouter(prefix="/analyses", tags=["analyses"], redirect_slashes=False)
 
 
 @router.get("/debug")

@@ -51,7 +51,7 @@ except Exception as e:
     AI_ENGINE_AVAILABLE = False
     analysis_engine = None
 
-router = APIRouter(prefix="/analyses", tags=["analyses"])
+router = APIRouter(prefix="/analyses", tags=["analyses"], redirect_slashes=False)
 
 # Debug endpoint
 @router.get("/debug")
