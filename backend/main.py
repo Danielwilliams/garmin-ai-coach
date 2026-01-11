@@ -96,3 +96,17 @@ async def health_check():
 @app.get("/test")
 async def test():
     return {"message": "Phase 2: Multi-tenancy ready!", "success": True}
+
+# Debug routes endpoint
+@app.get("/debug/routes")
+async def debug_routes():
+    """Debug endpoint to show all registered routes."""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'methods') and hasattr(route, 'path'):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods) if route.methods else [],
+                "name": getattr(route, 'name', 'unknown')
+            })
+    return {"routes": routes}
