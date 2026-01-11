@@ -13,9 +13,16 @@ class TrainingConfig(Base):
     name = Column(String(100), nullable=False)  # Config name (e.g., "Spring Training 2024")
     is_active = Column(Boolean, default=True, nullable=False)
     
-    # Analysis context (from YAML)
-    analysis_context = Column(Text, nullable=True)
-    planning_context = Column(Text, nullable=True)
+    # Athlete information
+    athlete_name = Column(String(200), nullable=False)
+    athlete_email = Column(String(255), nullable=False)
+    
+    # Training context (from YAML)
+    analysis_context = Column(Text, nullable=False)
+    planning_context = Column(Text, nullable=False)
+    training_needs = Column(Text, nullable=True)
+    session_constraints = Column(Text, nullable=True)
+    training_preferences = Column(Text, nullable=True)
     
     # Data extraction settings
     activities_days = Column(Integer, default=21, nullable=False)
@@ -27,6 +34,12 @@ class TrainingConfig(Base):
     
     # Output settings
     output_directory = Column(String(255), default="./data", nullable=False)
+    
+    # Garmin Connect credentials (encrypted)
+    garmin_email = Column(String(255), nullable=True)
+    garmin_password_encrypted = Column(Text, nullable=True)  # Stored encrypted
+    garmin_last_sync = Column(String(50), nullable=True)  # ISO datetime
+    garmin_is_connected = Column(Boolean, default=False, nullable=False)
     
     # Relationships
     # user = relationship("User", back_populates="training_configs")

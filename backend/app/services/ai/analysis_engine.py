@@ -11,13 +11,15 @@ from uuid import uuid4
 
 from app.services.ai.model_config import initialize_model_manager, AIMode
 from app.services.ai.langgraph.state.training_analysis_state import (
-    create_initial_state, 
+    initialize_analysis_state, 
     TrainingAnalysisState
 )
 from app.services.ai.langgraph.workflows.training_analysis_workflow import workflow_engine
-from app.database.models.analysis import Analysis
+from app.database.models.analysis import Analysis, AnalysisResult
 from app.database.models.training_config import TrainingConfig
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
+from uuid import UUID
 
 
 class AnalysisEngine:
@@ -57,11 +59,13 @@ class AnalysisEngine:
         training_config = await self._load_training_config(training_config_id, db)
         
         # Create initial analysis state
-        initial_state = create_initial_state(
+        initial_state = initialize_analysis_state(
             analysis_id=analysis_id,
             user_id=user_id,
             training_config_id=training_config_id,
-            analysis_config=analysis_config
+            analysis_type=analysis_config.get("analysis_type", "comprehensive"),
+            workflow_id=analysis_config.get("workflow_id", "training_analysis"),
+            training_config=training_config
         )
         
         # Add training config data to state
@@ -84,21 +88,63 @@ class AnalysisEngine:
     ) -> Dict[str, Any]:
         """Load training configuration from database."""
         
-        # TODO: Implement actual database loading
-        # This is a placeholder that will be replaced with real DB loading
-        
-        return {
-            "id": training_config_id,
-            "name": "Sample Training Config",
-            "analysis_context": "Sample analysis context",
-            "planning_context": "Sample planning context",
-            "activities_days": 21,
-            "metrics_days": 56,
-            "ai_mode": "development",
-            "enable_plotting": False,
-            "hitl_enabled": False,
-            "skip_synthesis": False
-        }
+        try:
+            # Load training config from database
+            query = select(TrainingConfig).where(TrainingConfig.id == UUID(training_config_id))
+            result = await db.execute(query)
+            config = result.scalar_one_or_none()
+            
+            if not config:
+                # Return default config if not found
+                return {
+                    "id": training_config_id,
+                    "name": "Default Training Config",
+                    "analysis_context": "General training analysis",
+                    "planning_context": "Weekly training planning",
+                    "activities_days": 21,
+                    "metrics_days": 56,
+                    "ai_mode": "development",
+                    "enable_plotting": False,
+                    "hitl_enabled": False,
+                    "skip_synthesis": False
+                }
+            
+            # Convert to dictionary including Garmin credentials
+            return {
+                "id": str(config.id),
+                "name": config.name,
+                "athlete_name": config.athlete_name,
+                "athlete_email": config.athlete_email,
+                "analysis_context": config.analysis_context or "General training analysis",
+                "planning_context": config.planning_context or "Weekly training planning",
+                "training_needs": config.training_needs,
+                "session_constraints": config.session_constraints,
+                "training_preferences": config.training_preferences,
+                "activities_days": config.activities_days,
+                "metrics_days": config.metrics_days,
+                "ai_mode": config.ai_mode,
+                "enable_plotting": config.enable_plotting,
+                "hitl_enabled": config.hitl_enabled,
+                "skip_synthesis": config.skip_synthesis,
+                "garmin_email": config.garmin_email,
+                "garmin_password_encrypted": config.garmin_password_encrypted,
+                "garmin_is_connected": config.garmin_is_connected
+            }
+            
+        except Exception as e:
+            print(f"Error loading training config: {e}")
+            # Return default config on error
+            return {
+                "id": training_config_id,
+                "name": "Default Training Config",
+                "analysis_context": "General training analysis",
+                "activities_days": 21,
+                "metrics_days": 56,
+                "ai_mode": "development",
+                "enable_plotting": False,
+                "hitl_enabled": False,
+                "skip_synthesis": False
+            }
     
     async def _create_analysis_record(
         self, 
@@ -107,21 +153,31 @@ class AnalysisEngine:
     ) -> None:
         """Create initial analysis record in database."""
         
-        # TODO: Create actual Analysis model instance
-        # This will integrate with the existing database models
-        
-        analysis_data = {
-            "id": state["analysis_id"],
-            "user_id": state["user_id"],
-            "training_config_id": state["training_config_id"],
-            "status": "pending",
-            "analysis_type": state["analysis_type"],
-            "workflow_id": state["workflow_id"],
-            "progress_percentage": 0,
-            "created_at": state["created_at"]
-        }
-        
-        print(f"📊 Created analysis record: {analysis_data}")
+        try:
+            # Create Analysis model instance
+            analysis = Analysis(
+                id=UUID(state["analysis_id"]),
+                user_id=UUID(state["user_id"]),
+                training_config_id=UUID(state["training_config_id"]),
+                status="running",
+                analysis_type=state["analysis_type"],
+                workflow_id=state["workflow_id"],
+                progress_percentage=0.0,
+                total_tokens=0,
+                estimated_cost=0.0,
+                retry_count=0
+            )
+            
+            db.add(analysis)
+            await db.commit()
+            await db.refresh(analysis)
+            
+            print(f"📊 Created analysis record: {analysis.id}")
+            
+        except Exception as e:
+            print(f"❌ Failed to create analysis record: {e}")
+            await db.rollback()
+            raise
     
     async def _execute_analysis_workflow(
         self, 
@@ -154,27 +210,94 @@ class AnalysisEngine:
     ) -> None:
         """Save analysis results to database."""
         
-        # TODO: Implement actual database saving
-        # This will save all the results, files, and metadata
+        try:
+            analysis_id = UUID(final_state["analysis_id"])
+            
+            # Calculate total tokens and cost
+            total_tokens = 0
+            total_cost = final_state.get("total_cost", 0.0)
+            
+            token_usage = final_state.get("token_usage", {})
+            for agent_usage_list in token_usage.values():
+                for usage in agent_usage_list:
+                    total_tokens += usage.get("total_tokens", 0)
+            
+            # Update main analysis record
+            progress = final_state.get("progress", {})
+            
+            update_stmt = (
+                update(Analysis)
+                .where(Analysis.id == analysis_id)
+                .values(
+                    status="completed" if final_state.get("workflow_complete") else "failed",
+                    progress_percentage=progress.get("overall_percentage", 100.0),
+                    summary=final_state.get("synthesis_analysis"),
+                    recommendations=self._extract_recommendations(final_state),
+                    weekly_plan=final_state.get("weekly_training_plan"),
+                    total_tokens=total_tokens,
+                    estimated_cost=total_cost,
+                    end_date=final_state.get("end_time"),
+                    error_message=None if final_state.get("workflow_complete") else "Workflow failed"
+                )
+            )
+            
+            await db.execute(update_stmt)
+            
+            # Save individual analysis results
+            await self._save_individual_results(final_state, db)
+            
+            await db.commit()
+            
+            print(f"💾 Saved analysis results for {analysis_id}")
+            
+        except Exception as e:
+            print(f"❌ Failed to save analysis results: {e}")
+            await db.rollback()
+            raise
+    
+    async def _save_individual_results(
+        self, 
+        final_state: TrainingAnalysisState,
+        db: AsyncSession
+    ) -> None:
+        """Save individual agent results as AnalysisResult records."""
         
-        results_data = {
-            "analysis_id": final_state["analysis_id"],
-            "status": "completed" if final_state["workflow_complete"] else "failed",
-            "progress_percentage": final_state["progress"].progress_percentage,
-            "summary": final_state.get("synthesis_output"),
-            "recommendations": self._extract_recommendations(final_state),
-            "weekly_plan": final_state.get("weekly_plan"),
-            "total_tokens": sum(
-                usage.total_tokens for usage in final_state["token_usage"].values()
-            ),
-            "estimated_cost": final_state["total_cost"],
-            "final_analysis_html": final_state.get("final_analysis_html"),
-            "final_planning_html": final_state.get("final_planning_html"),
-            "end_date": final_state.get("end_time"),
-            "summary_json": final_state.get("summary_json")
-        }
+        analysis_id = UUID(final_state["analysis_id"])
         
-        print(f"💾 Saving analysis results: {results_data}")
+        # Save results from each agent
+        result_mappings = [
+            ("metrics_summary", "metrics_summarizer", "summary", "Metrics Analysis Summary"),
+            ("physiology_summary", "physiology_summarizer", "summary", "Physiology Analysis Summary"), 
+            ("activity_summary", "activity_summarizer", "summary", "Activity Analysis Summary"),
+            ("metrics_expert_analysis", "metrics_expert", "expert_analysis", "Metrics Expert Analysis"),
+            ("physiology_expert_analysis", "physiology_expert", "expert_analysis", "Physiology Expert Analysis"),
+            ("activity_expert_analysis", "activity_expert", "expert_analysis", "Activity Expert Analysis"),
+            ("synthesis_analysis", "synthesis", "synthesis", "Comprehensive Analysis Synthesis"),
+            ("formatted_report", "formatting", "formatted_output", "Formatted Analysis Report"),
+            ("weekly_training_plan", "planning", "training_plan", "Weekly Training Plan")
+        ]
+        
+        for state_key, node_name, result_type, title in result_mappings:
+            content = final_state.get(state_key)
+            if content:
+                # Get token usage for this agent
+                agent_tokens = 0
+                token_usage = final_state.get("token_usage", {}).get(node_name, [])
+                for usage in token_usage:
+                    agent_tokens += usage.get("total_tokens", 0)
+                
+                result = AnalysisResult(
+                    analysis_id=analysis_id,
+                    node_name=node_name,
+                    result_type=result_type,
+                    title=title,
+                    content=content,
+                    tokens_used=agent_tokens
+                )
+                
+                db.add(result)
+        
+        print(f"Saved {len(result_mappings)} analysis results")
     
     async def _mark_analysis_failed(
         self, 
@@ -184,22 +307,42 @@ class AnalysisEngine:
     ) -> None:
         """Mark analysis as failed in database."""
         
-        # TODO: Update analysis status in database
-        
-        print(f"❌ Marking analysis as failed: {analysis_id} - {error_message}")
+        try:
+            update_stmt = (
+                update(Analysis)
+                .where(Analysis.id == UUID(analysis_id))
+                .values(
+                    status="failed",
+                    error_message=error_message,
+                    end_date=datetime.utcnow()
+                )
+            )
+            
+            await db.execute(update_stmt)
+            await db.commit()
+            
+            print(f"❌ Marked analysis as failed: {analysis_id} - {error_message}")
+            
+        except Exception as e:
+            print(f"Failed to update analysis status: {e}")
+            await db.rollback()
     
     def _extract_recommendations(self, state: TrainingAnalysisState) -> Optional[str]:
-        """Extract recommendations from expert outputs."""
+        """Extract recommendations from synthesis and expert outputs."""
         
+        # Primary source: synthesis analysis
+        synthesis = state.get("synthesis_analysis")
+        if synthesis:
+            return synthesis
+        
+        # Fallback: extract from expert analyses
         recommendations = []
-        
-        # Gather recommendations from all expert outputs
-        for expert_key in ["metrics_expert_output", "physiology_expert_output", "activity_expert_output"]:
+        for expert_key in ["metrics_expert_analysis", "physiology_expert_analysis", "activity_expert_analysis"]:
             expert_output = state.get(expert_key)
-            if expert_output and expert_output.recommendations:
-                recommendations.extend(expert_output.recommendations)
+            if expert_output:
+                recommendations.append(f"## {expert_key.title()}\n{expert_output}")
         
-        return "\n".join(recommendations) if recommendations else None
+        return "\n\n".join(recommendations) if recommendations else None
     
     async def get_analysis_status(
         self, 
@@ -208,18 +351,37 @@ class AnalysisEngine:
     ) -> Dict[str, Any]:
         """Get current status of an analysis."""
         
-        # TODO: Load from database
-        # For now return placeholder status
-        
-        return {
-            "analysis_id": analysis_id,
-            "status": "running",
-            "progress_percentage": 45.0,
-            "current_step": "expert_analysis",
-            "estimated_completion": None,
-            "errors": [],
-            "created_at": datetime.utcnow()
-        }
+        try:
+            query = select(Analysis).where(Analysis.id == UUID(analysis_id))
+            result = await db.execute(query)
+            analysis = result.scalar_one_or_none()
+            
+            if not analysis:
+                return {
+                    "analysis_id": analysis_id,
+                    "status": "not_found",
+                    "error": "Analysis not found"
+                }
+            
+            return {
+                "analysis_id": str(analysis.id),
+                "status": analysis.status,
+                "progress_percentage": analysis.progress_percentage,
+                "current_node": analysis.current_node,
+                "total_tokens": analysis.total_tokens,
+                "estimated_cost": analysis.estimated_cost,
+                "error_message": analysis.error_message,
+                "created_at": analysis.created_at,
+                "updated_at": analysis.updated_at,
+                "end_date": analysis.end_date
+            }
+            
+        except Exception as e:
+            return {
+                "analysis_id": analysis_id,
+                "status": "error",
+                "error": f"Failed to get status: {str(e)}"
+            }
     
     async def cancel_analysis(
         self, 
@@ -228,11 +390,28 @@ class AnalysisEngine:
     ) -> bool:
         """Cancel a running analysis."""
         
-        # TODO: Implement analysis cancellation
-        # This would involve stopping the workflow and updating status
-        
-        print(f"🛑 Cancelling analysis: {analysis_id}")
-        return True
+        try:
+            # Update analysis status to cancelled
+            update_stmt = (
+                update(Analysis)
+                .where(Analysis.id == UUID(analysis_id))
+                .values(
+                    status="cancelled",
+                    error_message="Analysis cancelled by user",
+                    end_date=datetime.utcnow()
+                )
+            )
+            
+            await db.execute(update_stmt)
+            await db.commit()
+            
+            print(f"🛑 Cancelled analysis: {analysis_id}")
+            return True
+            
+        except Exception as e:
+            print(f"Failed to cancel analysis: {e}")
+            await db.rollback()
+            return False
 
 
 # Global analysis engine instance

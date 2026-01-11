@@ -307,19 +307,32 @@ async def create_training_profile_from_wizard(
         counter += 1
         profile_name = f"{original_name} ({counter})"
     
-    # Create training config
+    # Encrypt Garmin password if provided
+    garmin_password_encrypted = None
+    if form_data.garmin_password:
+        garmin_password_encrypted = encrypt_password(form_data.garmin_password)
+    
+    # Create training config with all new fields
     training_config = TrainingConfig(
         user_id=current_user.id,
         name=profile_name,
+        athlete_name=form_data.athlete_name,
+        athlete_email=form_data.athlete_email,
         analysis_context=form_data.analysis_context,
         planning_context=form_data.planning_context,
+        training_needs=form_data.training_needs,
+        session_constraints=form_data.session_constraints,
+        training_preferences=form_data.training_preferences,
         activities_days=form_data.activities_days,
         metrics_days=form_data.metrics_days,
         ai_mode=form_data.ai_mode,
         enable_plotting=form_data.enable_plotting,
         hitl_enabled=form_data.hitl_enabled,
         skip_synthesis=form_data.skip_synthesis,
-        output_directory=form_data.output_directory
+        output_directory=form_data.output_directory,
+        garmin_email=form_data.garmin_email,
+        garmin_password_encrypted=garmin_password_encrypted,
+        garmin_is_connected=False
     )
     
     db.add(training_config)
@@ -529,3 +542,74 @@ async def _update_garmin_credentials(
             is_connected=False
         )
         db.add(garmin_account)
+
+
+@router.post("/{profile_id}/start-analysis", status_code=status.HTTP_201_CREATED)
+async def start_ai_analysis(
+    profile_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Start AI analysis for a training profile."""
+    
+    # Import AI analysis engine
+    try:
+        from app.services.ai.analysis_engine import analysis_engine
+        AI_ENGINE_AVAILABLE = True
+    except ImportError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"AI analysis engine not available: {str(e)}"
+        )
+    
+    # Verify profile ownership
+    query = select(TrainingConfig).where(
+        and_(
+            TrainingConfig.id == profile_id,
+            TrainingConfig.user_id == current_user.id
+        )
+    )
+    result = await db.execute(query)
+    training_config = result.scalar_one_or_none()
+    
+    if not training_config:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Training profile not found"
+        )
+    
+    try:
+        # Prepare analysis configuration from training config
+        analysis_config = {
+            "analysis_type": "comprehensive",
+            "ai_mode": training_config.ai_mode,
+            "activities_days": training_config.activities_days,
+            "metrics_days": training_config.metrics_days,
+            "enable_plotting": training_config.enable_plotting,
+            "hitl_enabled": training_config.hitl_enabled,
+            "skip_synthesis": training_config.skip_synthesis,
+            "workflow_id": f"training_analysis_{profile_id}"
+        }
+        
+        # Start analysis using AI engine
+        analysis_id = await analysis_engine.start_analysis(
+            user_id=str(current_user.id),
+            training_config_id=str(profile_id),
+            analysis_config=analysis_config,
+            db=db
+        )
+        
+        return {
+            "status": "success",
+            "message": "AI analysis started successfully",
+            "analysis_id": analysis_id,
+            "training_profile_id": str(profile_id),
+            "estimated_duration_minutes": 5,  # Estimate based on AI mode
+            "progress_url": f"/api/v1/analyses/{analysis_id}"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start AI analysis: {str(e)}"
+        )

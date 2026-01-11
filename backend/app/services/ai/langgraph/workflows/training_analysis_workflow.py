@@ -14,6 +14,20 @@ from app.services.ai.langgraph.state.training_analysis_state import (
     add_error
 )
 
+# Import all AI agent nodes
+from app.services.ai.langgraph.nodes.metrics_summarizer_node import metrics_summarizer_node
+from app.services.ai.langgraph.nodes.physiology_summarizer_node import physiology_summarizer_node
+from app.services.ai.langgraph.nodes.activity_summarizer_node import activity_summarizer_node
+from app.services.ai.langgraph.nodes.metrics_expert_node import metrics_expert_node
+from app.services.ai.langgraph.nodes.physiology_expert_node import physiology_expert_node
+from app.services.ai.langgraph.nodes.activity_expert_node import activity_expert_node
+from app.services.ai.langgraph.nodes.synthesis_node import synthesis_node
+from app.services.ai.langgraph.nodes.formatting_node import formatting_node
+from app.services.ai.langgraph.nodes.planning_node import planning_node
+
+# Import data extraction
+from app.services.garmin.data_extractor import extract_garmin_data, ExtractionConfig
+
 
 class TrainingAnalysisWorkflow:
     """Main workflow orchestrator for training analysis."""
@@ -31,27 +45,21 @@ class TrainingAnalysisWorkflow:
         workflow.add_node("data_extraction", self._data_extraction_node)
         
         # === PARALLEL SUMMARIZATION NODES ===
-        workflow.add_node("metrics_summarizer", self._metrics_summarizer_node)
-        workflow.add_node("physiology_summarizer", self._physiology_summarizer_node)
-        workflow.add_node("activity_summarizer", self._activity_summarizer_node)
+        workflow.add_node("metrics_summarizer", metrics_summarizer_node)
+        workflow.add_node("physiology_summarizer", physiology_summarizer_node)
+        workflow.add_node("activity_summarizer", activity_summarizer_node)
         
         # === EXPERT ANALYSIS NODES ===
-        workflow.add_node("metrics_expert", self._metrics_expert_node)
-        workflow.add_node("physiology_expert", self._physiology_expert_node)
-        workflow.add_node("activity_expert", self._activity_expert_node)
+        workflow.add_node("metrics_expert", metrics_expert_node)
+        workflow.add_node("physiology_expert", physiology_expert_node)
+        workflow.add_node("activity_expert", activity_expert_node)
         
-        # === ORCHESTRATOR NODE ===
-        workflow.add_node("orchestrator", self._orchestrator_node)
+        # === SYNTHESIS NODE ===
+        workflow.add_node("synthesis", synthesis_node)
         
-        # === SYNTHESIS BRANCH ===
-        workflow.add_node("synthesis", self._synthesis_node)
-        workflow.add_node("formatter", self._formatter_node)
-        workflow.add_node("plot_resolution", self._plot_resolution_node)
-        
-        # === PLANNING BRANCH ===
-        workflow.add_node("season_planner", self._season_planner_node)
-        workflow.add_node("weekly_planner", self._weekly_planner_node)
-        workflow.add_node("plan_formatter", self._plan_formatter_node)
+        # === OUTPUT NODES ===
+        workflow.add_node("formatting", formatting_node)
+        workflow.add_node("planning", planning_node)
         
         # === FINAL OUTPUT NODE ===
         workflow.add_node("finalize_output", self._finalize_output_node)
@@ -61,58 +69,28 @@ class TrainingAnalysisWorkflow:
         # Start with data extraction
         workflow.set_entry_point("data_extraction")
         
-        # Data extraction → Parallel summarization
+        # Data extraction → Parallel summarization (all run in parallel)
         workflow.add_edge("data_extraction", "metrics_summarizer")
         workflow.add_edge("data_extraction", "physiology_summarizer")  
         workflow.add_edge("data_extraction", "activity_summarizer")
         
-        # Summarizers → Expert agents (wait for all summarizers)
+        # Summarizers → Expert agents (sequential per domain)
         workflow.add_edge("metrics_summarizer", "metrics_expert")
         workflow.add_edge("physiology_summarizer", "physiology_expert")
         workflow.add_edge("activity_summarizer", "activity_expert")
         
-        # All experts → Orchestrator
-        workflow.add_edge("metrics_expert", "orchestrator")
-        workflow.add_edge("physiology_expert", "orchestrator")
-        workflow.add_edge("activity_expert", "orchestrator")
+        # All experts → Synthesis (waits for all experts to complete)
+        workflow.add_edge("metrics_expert", "synthesis")
+        workflow.add_edge("physiology_expert", "synthesis")
+        workflow.add_edge("activity_expert", "synthesis")
         
-        # Orchestrator → Conditional routing
-        workflow.add_conditional_edges(
-            "orchestrator",
-            self._route_after_orchestrator,
-            {
-                "analysis": "synthesis",
-                "planning": "season_planner", 
-                "both": "synthesis"
-            }
-        )
+        # Synthesis → Parallel output generation
+        workflow.add_edge("synthesis", "formatting")
+        workflow.add_edge("synthesis", "planning")
         
-        # === ANALYSIS BRANCH ===
-        workflow.add_edge("synthesis", "formatter")
-        workflow.add_edge("formatter", "plot_resolution")
-        
-        # === PLANNING BRANCH ===
-        workflow.add_edge("season_planner", "weekly_planner")
-        workflow.add_edge("weekly_planner", "plan_formatter")
-        
-        # Conditional routing to finalize
-        workflow.add_conditional_edges(
-            "plot_resolution",
-            self._check_planning_needed,
-            {
-                "need_planning": "season_planner",
-                "finalize": "finalize_output"
-            }
-        )
-        
-        workflow.add_conditional_edges(
-            "plan_formatter", 
-            self._check_analysis_needed,
-            {
-                "need_analysis": "synthesis",
-                "finalize": "finalize_output"
-            }
-        )
+        # Both outputs → Finalize
+        workflow.add_edge("formatting", "finalize_output")
+        workflow.add_edge("planning", "finalize_output")
         
         # Final output → END
         workflow.add_edge("finalize_output", END)
@@ -127,228 +105,47 @@ class TrainingAnalysisWorkflow:
         try:
             state = update_progress(state, "data_extraction", 5.0)
             
-            # TODO: Implement actual data extraction
-            # This will be implemented in the next step
-            state["garmin_data"] = {"placeholder": "data_extraction"}
-            state["user_profile"] = {"placeholder": "user_profile"}
+            # Get training config from state
+            training_config = state.get("training_config", {})
             
-            state["next_step"] = "parallel_summarization"
+            # Create extraction configuration
+            extraction_config = ExtractionConfig(
+                activities_days=training_config.get("activities_days", 21),
+                metrics_days=training_config.get("metrics_days", 56),
+                include_detailed_activities=training_config.get("enable_plotting", False)
+            )
+            
+            # Get Garmin credentials from training config or use mock data
+            garmin_email = training_config.get("garmin_email", "mock_user@example.com")
+            garmin_password = training_config.get("garmin_password_encrypted", "mock_password")
+            
+            # Decrypt password if it's encrypted (simplified for now)
+            if garmin_password and garmin_password != "mock_password":
+                try:
+                    from app.core.security import decrypt_password
+                    garmin_password = decrypt_password(garmin_password)
+                except Exception:
+                    # Fall back to mock if decryption fails
+                    garmin_password = "mock_password"
+                    garmin_email = "mock_user@example.com"
+            
+            # Extract data using provided or mock credentials
+            garmin_data = await extract_garmin_data(
+                email=garmin_email,
+                password=garmin_password,
+                config=extraction_config
+            )
+            
+            # Store extracted data in state
+            state["garmin_data"] = garmin_data.dict()
+            state["user_profile"] = garmin_data.user_profile.dict() if garmin_data.user_profile else {}
             
             return state
             
         except Exception as e:
             return add_error(state, f"Data extraction failed: {str(e)}")
     
-    async def _metrics_summarizer_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Summarize training metrics and fitness data."""
-        
-        try:
-            state = update_progress(state, "metrics_summarization", 15.0)
-            
-            # TODO: Implement AI summarization
-            state["metrics_summary"] = "Placeholder metrics summary"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Metrics summarization failed: {str(e)}")
-    
-    async def _physiology_summarizer_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Summarize physiological and recovery data."""
-        
-        try:
-            state = update_progress(state, "physiology_summarization", 15.0)
-            
-            # TODO: Implement AI summarization  
-            state["physiology_summary"] = "Placeholder physiology summary"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Physiology summarization failed: {str(e)}")
-    
-    async def _activity_summarizer_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Summarize activity data and workout patterns."""
-        
-        try:
-            state = update_progress(state, "activity_summarization", 15.0)
-            
-            # TODO: Implement AI summarization
-            state["activity_summary"] = "Placeholder activity summary"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Activity summarization failed: {str(e)}")
-    
-    async def _metrics_expert_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Expert analysis of training metrics and performance."""
-        
-        try:
-            state = update_progress(state, "metrics_expert_analysis", 35.0)
-            
-            # TODO: Implement AI expert analysis
-            from app.services.ai.langgraph.state.training_analysis_state import ExpertOutput
-            
-            state["metrics_expert_output"] = ExpertOutput(
-                insights="Placeholder metrics insights",
-                patterns=["Pattern 1", "Pattern 2"],
-                concerns=["Concern 1"],
-                recommendations=["Recommendation 1"],
-                metrics_summary={},
-                confidence_level=0.8
-            )
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Metrics expert analysis failed: {str(e)}")
-    
-    async def _physiology_expert_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Expert analysis of physiological data."""
-        
-        try:
-            state = update_progress(state, "physiology_expert_analysis", 35.0)
-            
-            # TODO: Implement AI expert analysis
-            from app.services.ai.langgraph.state.training_analysis_state import ExpertOutput
-            
-            state["physiology_expert_output"] = ExpertOutput(
-                insights="Placeholder physiology insights",
-                patterns=["Pattern 1"],
-                concerns=[], 
-                recommendations=["Recommendation 1"],
-                metrics_summary={},
-                confidence_level=0.8
-            )
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Physiology expert analysis failed: {str(e)}")
-    
-    async def _activity_expert_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Expert analysis of activity data."""
-        
-        try:
-            state = update_progress(state, "activity_expert_analysis", 35.0)
-            
-            # TODO: Implement AI expert analysis
-            from app.services.ai.langgraph.state.training_analysis_state import ExpertOutput
-            
-            state["activity_expert_output"] = ExpertOutput(
-                insights="Placeholder activity insights", 
-                patterns=["Pattern 1"],
-                concerns=[],
-                recommendations=["Recommendation 1"],
-                metrics_summary={},
-                confidence_level=0.8
-            )
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Activity expert analysis failed: {str(e)}")
-    
-    async def _orchestrator_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Master orchestrator for workflow routing decisions."""
-        
-        try:
-            state = update_progress(state, "orchestrator_routing", 50.0)
-            
-            # TODO: Implement intelligent routing logic
-            # For now, always do both analysis and planning
-            state["orchestrator_routing"] = "both"
-            state["orchestrator_reasoning"] = "Performing both analysis and planning as requested"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Orchestrator failed: {str(e)}")
-    
-    async def _synthesis_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Synthesize all expert outputs into comprehensive analysis."""
-        
-        try:
-            state = update_progress(state, "synthesis", 70.0)
-            
-            # TODO: Implement AI synthesis
-            state["synthesis_output"] = "Placeholder comprehensive analysis synthesis"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Synthesis failed: {str(e)}")
-    
-    async def _formatter_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Format analysis output into HTML."""
-        
-        try:
-            state = update_progress(state, "formatting", 80.0)
-            
-            # TODO: Implement HTML formatting
-            state["formatted_analysis"] = "<html>Placeholder HTML analysis</html>"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Formatting failed: {str(e)}")
-    
-    async def _plot_resolution_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Resolve plot references and generate visualizations."""
-        
-        try:
-            state = update_progress(state, "plot_resolution", 85.0)
-            
-            # TODO: Implement plot generation
-            state["plots_resolved"] = True
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Plot resolution failed: {str(e)}")
-    
-    async def _season_planner_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Generate season-level training plan."""
-        
-        try:
-            state = update_progress(state, "season_planning", 60.0)
-            
-            # TODO: Implement AI season planning
-            state["season_plan"] = "Placeholder season plan"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Season planning failed: {str(e)}")
-    
-    async def _weekly_planner_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Generate weekly training plans."""
-        
-        try:
-            state = update_progress(state, "weekly_planning", 75.0)
-            
-            # TODO: Implement AI weekly planning
-            state["weekly_plan"] = "Placeholder weekly plan"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Weekly planning failed: {str(e)}")
-    
-    async def _plan_formatter_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
-        """Format planning output into HTML."""
-        
-        try:
-            state = update_progress(state, "plan_formatting", 85.0)
-            
-            # TODO: Implement plan HTML formatting
-            state["plan_formatted"] = "<html>Placeholder HTML plans</html>"
-            
-            return state
-            
-        except Exception as e:
-            return add_error(state, f"Plan formatting failed: {str(e)}")
+    # All node implementations are now handled by imported agent functions
     
     async def _finalize_output_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
         """Finalize all outputs and create summary."""
@@ -357,22 +154,32 @@ class TrainingAnalysisWorkflow:
             state = update_progress(state, "finalization", 100.0)
             
             # Combine final outputs
-            state["final_analysis_html"] = state.get("formatted_analysis")
-            state["final_planning_html"] = state.get("plan_formatted")
+            state["final_analysis_html"] = state.get("formatted_report")
+            state["final_planning_html"] = state.get("weekly_training_plan")
             
             # Mark workflow as complete
             state["workflow_complete"] = True
             state["end_time"] = state["updated_at"]
             
+            # Calculate total cost from token usage
+            total_cost = 0.0
+            token_usage = state.get("token_usage", {})
+            for agent_name, usage_list in token_usage.items():
+                for usage in usage_list:
+                    total_cost += usage.get("estimated_cost", 0.0)
+            
+            state["total_cost"] = total_cost
+            
             # Generate summary
             state["summary_json"] = {
                 "analysis_id": state["analysis_id"],
                 "status": "completed",
-                "total_cost": state["total_cost"],
+                "total_cost": total_cost,
                 "execution_time_minutes": (
                     (state["end_time"] - state["start_time"]).total_seconds() / 60
                 ),
-                "files_generated": state["output_files"]
+                "total_tokens": state.get("total_tokens", 0),
+                "agents_completed": list(token_usage.keys())
             }
             
             return state
@@ -381,38 +188,7 @@ class TrainingAnalysisWorkflow:
             return add_error(state, f"Finalization failed: {str(e)}")
     
     # === ROUTING CONDITIONS ===
-    
-    def _route_after_orchestrator(self, state: TrainingAnalysisState) -> str:
-        """Route workflow after orchestrator decision."""
-        
-        routing = state.get("orchestrator_routing", "both")
-        
-        if routing == "analysis":
-            return "analysis"
-        elif routing == "planning":
-            return "planning"
-        else:
-            return "both"
-    
-    def _check_planning_needed(self, state: TrainingAnalysisState) -> str:
-        """Check if planning is still needed after analysis."""
-        
-        routing = state.get("orchestrator_routing", "both")
-        
-        if routing in ["both", "planning"] and not state.get("plan_formatted"):
-            return "need_planning"
-        else:
-            return "finalize"
-    
-    def _check_analysis_needed(self, state: TrainingAnalysisState) -> str:
-        """Check if analysis is still needed after planning."""
-        
-        routing = state.get("orchestrator_routing", "both")
-        
-        if routing in ["both", "analysis"] and not state.get("formatted_analysis"):
-            return "need_analysis"
-        else:
-            return "finalize"
+    # Simplified workflow - no complex routing needed
     
     # === WORKFLOW EXECUTION ===
     

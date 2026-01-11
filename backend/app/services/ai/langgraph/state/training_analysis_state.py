@@ -107,9 +107,14 @@ class TrainingAnalysisState(TypedDict):
     activity_summary: Optional[str]
     
     # === EXPERT ANALYSIS OUTPUTS ===
-    metrics_expert_output: Optional[ExpertOutput]
-    physiology_expert_output: Optional[ExpertOutput]
-    activity_expert_output: Optional[ExpertOutput]
+    metrics_expert_analysis: Optional[str]
+    physiology_expert_analysis: Optional[str]
+    activity_expert_analysis: Optional[str]
+    
+    # === SYNTHESIS AND FORMATTING ===
+    synthesis_analysis: Optional[str]
+    formatted_report: Optional[str]
+    weekly_training_plan: Optional[str]
     
     # === ORCHESTRATOR DECISIONS ===
     orchestrator_routing: Optional[str]  # "analysis", "planning", "both"
@@ -117,11 +122,9 @@ class TrainingAnalysisState(TypedDict):
     hitl_questions: Optional[List[str]]
     hitl_responses: Optional[Dict[str, str]]
     
-    # === SYNTHESIS OUTPUT ===
+    # === LEGACY OUTPUT FIELDS (for compatibility) ===
     synthesis_output: Optional[str]
     formatted_analysis: Optional[str]
-    
-    # === PLANNING OUTPUTS ===
     season_plan: Optional[str]
     weekly_plan: Optional[str]
     plan_formatted: Optional[str]
@@ -142,7 +145,8 @@ class TrainingAnalysisState(TypedDict):
     retry_count: int
     
     # === COST TRACKING ===
-    token_usage: Dict[str, TokenUsage]  # Keyed by agent/model
+    token_usage: Dict[str, List[TokenUsage]]  # Keyed by agent name
+    total_tokens: int
     total_cost: float
     
     # === METADATA ===
@@ -210,9 +214,14 @@ def create_initial_state(
         activity_summary=None,
         
         # Initialize expert outputs
-        metrics_expert_output=None,
-        physiology_expert_output=None,
-        activity_expert_output=None,
+        metrics_expert_analysis=None,
+        physiology_expert_analysis=None,
+        activity_expert_analysis=None,
+        
+        # Initialize synthesis and formatting
+        synthesis_analysis=None,
+        formatted_report=None,
+        weekly_training_plan=None,
         
         # Initialize orchestrator
         orchestrator_routing=None,
@@ -244,6 +253,7 @@ def create_initial_state(
         
         # Initialize cost tracking
         token_usage={},
+        total_tokens=0,
         total_cost=0.0,
         
         # Timestamps
@@ -280,12 +290,29 @@ def add_token_usage(
 ) -> TrainingAnalysisState:
     """Add token usage for cost tracking."""
     
-    state["token_usage"][agent] = usage
+    # Initialize agent usage list if doesn't exist
+    if agent not in state["token_usage"]:
+        state["token_usage"][agent] = []
     
-    # Update total cost
-    state["total_cost"] = sum(
-        usage.estimated_cost for usage in state["token_usage"].values()
-    )
+    # Add usage to agent's list
+    state["token_usage"][agent].append(usage)
+    
+    # Update totals
+    total_tokens = 0
+    total_cost = 0.0
+    
+    for agent_usage_list in state["token_usage"].values():
+        for usage_item in agent_usage_list:
+            if hasattr(usage_item, 'total_tokens'):
+                total_tokens += usage_item.total_tokens
+                total_cost += usage_item.estimated_cost
+            elif isinstance(usage_item, dict):
+                total_tokens += usage_item.get('total_tokens', 0)
+                total_cost += usage_item.get('estimated_cost', 0.0)
+    
+    state["total_tokens"] = total_tokens
+    state["total_cost"] = total_cost
+    state["updated_at"] = datetime.utcnow()
     
     return state
 
@@ -307,3 +334,57 @@ def add_plot_reference(state: TrainingAnalysisState, plot: PlotReference) -> Tra
     state["updated_at"] = datetime.utcnow()
     
     return state
+
+
+def add_warning(state: TrainingAnalysisState, warning: str) -> TrainingAnalysisState:
+    """Add warning to state tracking."""
+    
+    state["warnings"].append(warning)
+    state["updated_at"] = datetime.utcnow()
+    
+    return state
+
+
+def increment_retry_count(state: TrainingAnalysisState) -> TrainingAnalysisState:
+    """Increment retry count for error recovery."""
+    
+    state["retry_count"] += 1
+    state["updated_at"] = datetime.utcnow()
+    
+    return state
+
+
+def validate_state_integrity(state: TrainingAnalysisState) -> List[str]:
+    """Validate state integrity and return list of issues."""
+    
+    issues = []
+    
+    # Check required fields
+    required_fields = [
+        "analysis_id", "user_id", "training_config_id", 
+        "workflow_id", "analysis_type", "current_step"
+    ]
+    
+    for field in required_fields:
+        if not state.get(field):
+            issues.append(f"Missing required field: {field}")
+    
+    # Check progress consistency
+    progress = state.get("progress")
+    if progress:
+        if progress.progress_percentage < 0 or progress.progress_percentage > 100:
+            issues.append("Invalid progress percentage")
+        
+        if progress.error_count != len(state.get("errors", [])):
+            issues.append("Error count mismatch")
+    
+    # Check cost tracking
+    if state.get("total_cost", 0) < 0:
+        issues.append("Invalid total cost (negative)")
+    
+    # Check timestamps
+    if state.get("end_time") and state.get("start_time"):
+        if state["end_time"] < state["start_time"]:
+            issues.append("End time before start time")
+    
+    return issues
