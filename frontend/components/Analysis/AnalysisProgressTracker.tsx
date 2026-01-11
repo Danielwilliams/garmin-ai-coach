@@ -148,7 +148,7 @@ const AnalysisProgressTracker: React.FC<AnalysisProgressTrackerProps> = ({
   const startPolling = () => {
     const interval = setInterval(async () => {
       await updateProgress();
-    }, 3000); // Poll every 3 seconds
+    }, 5000); // Poll every 5 seconds to reduce interference
 
     setPollingInterval(interval);
   };
@@ -156,33 +156,40 @@ const AnalysisProgressTracker: React.FC<AnalysisProgressTrackerProps> = ({
   const updateProgress = async () => {
     try {
       const analysisData = await analysisAPI.getAnalysis(analysisId);
-      setAnalysis(analysisData);
+      
+      // Only update if there's a meaningful change to prevent scroll jumping
+      const hasStatusChange = !analysis || analysis.status !== analysisData.status;
+      const hasProgressChange = !analysis || analysis.current_node !== analysisData.current_node;
+      
+      if (hasStatusChange || hasProgressChange) {
+        setAnalysis(analysisData);
 
-      // Map current node to progress steps
-      const currentNode = analysisData.current_node;
-      if (currentNode) {
-        setCurrentStep(currentNode);
-        updateStepsStatus(currentNode, analysisData);
-      }
+        // Map current node to progress steps
+        const currentNode = analysisData.current_node;
+        if (currentNode && currentNode !== currentStep) {
+          setCurrentStep(currentNode);
+          updateStepsStatus(currentNode, analysisData);
+        }
 
-      // Check if completed
-      if (analysisData.status === 'completed') {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
+        // Check if completed
+        if (analysisData.status === 'completed') {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+          }
+          setProgressSteps(prev => prev.map(step => ({
+            ...step,
+            status: 'completed'
+          })));
+          
+          if (onComplete) {
+            onComplete(analysisData);
+          }
+        } else if (analysisData.status === 'failed') {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+          }
+          setError(analysisData.error_message || 'Analysis failed');
         }
-        setProgressSteps(prev => prev.map(step => ({
-          ...step,
-          status: 'completed'
-        })));
-        
-        if (onComplete) {
-          onComplete(analysisData);
-        }
-      } else if (analysisData.status === 'failed') {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-        }
-        setError(analysisData.error_message || 'Analysis failed');
       }
     } catch (err: any) {
       console.error('Failed to update progress:', err);
@@ -392,17 +399,35 @@ const AnalysisProgressTracker: React.FC<AnalysisProgressTrackerProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
-          Your analysis will automatically advance when complete, or you can{' '}
-          <button 
-            onClick={() => router.push('/analysis')}
-            className="text-blue-600 hover:text-blue-800 underline"
-          >
-            return to the analysis dashboard
-          </button>
-          .
-        </p>
+      <div className="mt-8 text-center space-y-4">
+        {analysis?.status === 'completed' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-green-900 mb-2">Analysis Complete!</h3>
+            <p className="text-green-700 mb-4">
+              Your AI coaching analysis is ready. View your personalized insights and training plan.
+            </p>
+            <div className="space-x-3">
+              <Button 
+                onClick={() => router.push(`/analysis/${analysisId}`)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                View Results
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => router.push('/analysis')}
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {analysis?.status !== 'completed' && (
+          <p className="text-sm text-gray-500">
+            Analysis in progress... You can safely navigate away and return later.
+          </p>
+        )}
       </div>
     </div>
   );

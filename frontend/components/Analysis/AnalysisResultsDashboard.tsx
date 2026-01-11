@@ -235,7 +235,7 @@ const AnalysisResultsDashboard: React.FC<AnalysisResultsDashboardProps> = ({ ana
           <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/analysis')}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="w-6 h-6" />
