@@ -230,7 +230,10 @@ class AnalysisEngine:
             token_usage = final_state.get("token_usage", {})
             for agent_usage_list in token_usage.values():
                 for usage in agent_usage_list:
-                    total_tokens += usage.get("total_tokens", 0)
+                    if isinstance(usage, dict):
+                        total_tokens += usage.get("total_tokens", 0)
+                    else:
+                        total_tokens += getattr(usage, "total_tokens", 0)
             
             # Update main analysis record
             progress = final_state.get("progress", {})
@@ -294,7 +297,10 @@ class AnalysisEngine:
                 agent_tokens = 0
                 token_usage = final_state.get("token_usage", {}).get(node_name, [])
                 for usage in token_usage:
-                    agent_tokens += usage.get("total_tokens", 0)
+                    if isinstance(usage, dict):
+                        agent_tokens += usage.get("total_tokens", 0)
+                    else:
+                        agent_tokens += getattr(usage, "total_tokens", 0)
                 
                 result = AnalysisResult(
                     analysis_id=analysis_id,

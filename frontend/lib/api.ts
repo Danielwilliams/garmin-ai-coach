@@ -191,8 +191,7 @@ export const authAPI = {
 export const analysisAPI = {
   async getAnalyses(): Promise<any[]> {
     try {
-      // Use mock data for now while backend is being connected
-      const response = await api.get('/mock/analyses');
+      const response = await api.get('/analyses');
       return response.data;
     } catch (error: any) {
       const apiError: ApiError = {
@@ -205,8 +204,7 @@ export const analysisAPI = {
 
   async getAnalysis(analysisId: string): Promise<any> {
     try {
-      // Use mock data for now while backend is being connected
-      const response = await api.get(`/mock/analyses/${analysisId}`);
+      const response = await api.get(`/analyses/${analysisId}`);
       return response.data;
     } catch (error: any) {
       const apiError: ApiError = {
