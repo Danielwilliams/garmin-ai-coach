@@ -9,15 +9,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.api.training_profiles import router as training_profiles_router
 
-# Import analyses router with error handling
+# Import analyses router with error handling and fallback
 try:
     from app.api.analyses import router as analyses_router
     ANALYSES_AVAILABLE = True
-    print("✅ Analyses router imported successfully")
+    print("✅ Full analyses router imported successfully")
 except ImportError as e:
-    print(f"❌ Failed to import analyses router: {e}")
-    ANALYSES_AVAILABLE = False
-    analyses_router = None
+    print(f"❌ Failed to import full analyses router: {e}")
+    print("🔄 Falling back to minimal analyses router...")
+    try:
+        from app.api.analyses_minimal import router as analyses_router
+        ANALYSES_AVAILABLE = True
+        print("✅ Minimal analyses router imported successfully")
+    except ImportError as e2:
+        print(f"❌ Failed to import minimal analyses router: {e2}")
+        ANALYSES_AVAILABLE = False
+        analyses_router = None
 
 from app.api.mock_data import router as mock_router
 
