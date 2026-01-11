@@ -322,6 +322,19 @@ export const trainingProfileAPI = {
       };
       throw apiError;
     }
+  },
+
+  async startAnalysis(profileId: string): Promise<any> {
+    try {
+      const response = await api.post(`/training-profiles/${profileId}/start-analysis`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to start AI analysis',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
   }
 };
 

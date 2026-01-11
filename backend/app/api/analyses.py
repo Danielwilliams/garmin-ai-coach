@@ -237,7 +237,10 @@ async def create_analysis(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new analysis using the AI engine."""
+    """Create a new analysis using the AI engine.
+    
+    Note: This endpoint is deprecated. Use POST /training-profiles/{id}/start-analysis instead.
+    """
     
     # Verify the training config belongs to the user
     config_query = select(TrainingConfig).where(

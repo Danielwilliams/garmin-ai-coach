@@ -60,17 +60,11 @@ const NewAnalysisPage: React.FC = () => {
     try {
       setIsStarting(true);
       
-      // Create new analysis
-      const analysisData = {
-        training_config_id: selectedProfile,
-        analysis_type: 'full_analysis',
-        workflow_id: 'wf_spring_analysis_001'
-      };
-
-      const newAnalysis = await analysisAPI.createAnalysis(analysisData);
+      // Start AI analysis using the new integrated endpoint
+      const analysisResponse = await trainingProfileAPI.startAnalysis(selectedProfile);
       
       // Navigate to the analysis detail page
-      router.push(`/analysis/${newAnalysis.id}`);
+      router.push(`/analysis/${analysisResponse.analysis_id}`);
       
     } catch (err: any) {
       setError(err.detail || 'Failed to start analysis');
