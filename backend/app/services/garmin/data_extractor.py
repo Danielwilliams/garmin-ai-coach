@@ -106,16 +106,18 @@ class TriathlonCoachDataExtractor:
             self.authenticated = True
             
             # Load mock user profile
+            # Create realistic triathlete profile with detailed characteristics
+            # This profile represents a serious age-group triathlete with specific needs
             self.user_profile = UserProfile(
-                user_id="mock_user_123",
-                display_name="Test Athlete",
+                user_id="advanced_triathlete_001",
+                display_name="Sarah Johnson",  # Realistic name for serious athlete
                 email=self.email,
-                birth_date=date(1985, 6, 15),
-                gender="male",
-                height_cm=175.0,
-                weight_kg=70.0,
-                activity_level="very_active",
-                timezone="America/New_York"
+                birth_date=date(1985, 6, 15),  # 38-year-old masters athlete
+                gender="female",  # Female triathlete demographics 
+                height_cm=168.0,  # Realistic height for competitive female
+                weight_kg=58.0,   # Realistic weight for competitive triathlete
+                activity_level="very_active",  # Training 8-12 hours per week
+                timezone="America/Denver"  # Mountain time - common triathlon hub
             )
             
             logger.info("Authentication successful")

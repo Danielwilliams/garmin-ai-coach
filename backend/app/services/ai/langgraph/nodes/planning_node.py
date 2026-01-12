@@ -352,7 +352,42 @@ WEEKLY TRAINING PLAN REQUIREMENTS:
    - Follow synthesis optimization strategies
    - Include monitoring for recommended improvements
 
-Format the plan as a structured weekly schedule with clear daily objectives and detailed session prescriptions. Ensure the plan is practical, progressive, and directly addresses the insights from the comprehensive analysis.""")
+Format the plan as a structured weekly schedule with clear daily objectives and detailed session prescriptions. Ensure the plan is practical, progressive, and directly addresses the insights from the comprehensive analysis.
+
+REQUIRED OUTPUT FORMAT - Match CLI Format Exactly:
+
+## INTENSITY ZONES (FTP-Based)
+
+| Zone | Name | % FTP | HR Guide | Purpose |
+|------|------|-------|----------|---------|
+| Z1 | Active Recovery | <55% | <68% | Flush, mobility |
+| Z2 | Aerobic Base | 56-75% | 69-83% | Fat oxidation, mitochondrial density |
+| Z3 | Tempo | 76-90% | 84-94% | Lactate clearance, race pace |
+| Z4 | Threshold | 91-105% | 95-105% | FTP improvement, sustained power |
+| Z5 | VO2max | 106-120% | >106% | Aerobic capacity ceiling |
+
+---
+
+## WEEK 1: [PHASE THEME] ([Date Range])
+**Phase Theme:** [Specific development focus]  
+**Load Target:** [TSS Range] (with reasoning)  
+**Physiology Mandate:** [Sleep/recovery requirements]
+
+---
+
+### **[DAY], [Date]**
+**FOCUS:** [Primary objective]  
+**WORKOUT:** [Detailed session description with zones, duration, intervals]  
+**TSS:** ~[Target TSS]  
+**PURPOSE:** [Specific training adaptation being targeted]  
+**ADAPTATION:** [Conditional modifications based on recovery metrics]
+
+[Continue for each day of the week]
+
+**WEEK 1 TOTAL:** [Total TSS] ([ACWR context])  
+**Success Criteria:** [Measurable outcomes for the week]
+
+Create multiple weeks following this exact format with progressive development.""")
             ])
             
             # Generate response
