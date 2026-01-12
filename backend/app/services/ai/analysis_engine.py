@@ -5,6 +5,7 @@ replicating the exact functionality from the CLI application.
 """
 
 import asyncio
+import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
 from uuid import uuid4
@@ -15,11 +16,19 @@ from app.services.ai.langgraph.state.training_analysis_state import (
     TrainingAnalysisState
 )
 from app.services.ai.langgraph.workflows.training_analysis_workflow import workflow_engine
+from app.services.ai.status_tracker import (
+    get_status_tracker, 
+    ComponentStatus, 
+    ComponentType,
+    cleanup_tracker
+)
 from app.database.models.analysis import Analysis, AnalysisResult
 from app.database.models.training_config import TrainingConfig
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisEngine:
@@ -51,45 +60,127 @@ class AnalysisEngine:
         # Generate analysis ID
         analysis_id = str(uuid4())
         
-        # Initialize model manager with AI mode
-        ai_mode = AIMode(analysis_config.get("ai_mode", "development"))
-        self._model_manager = initialize_model_manager(ai_mode)
-        
-        # Load training configuration from database
-        training_config = await self._load_training_config(training_config_id, db)
-        
-        # Create initial analysis state with correct parameters
-        # Merge training config data into analysis config for state initialization
-        merged_config = {
-            **analysis_config,
-            "analysis_type": analysis_config.get("analysis_type", "full_analysis"),
-            "ai_mode": training_config.get("ai_mode", analysis_config.get("ai_mode", "development")),
-            "activities_days": training_config.get("activities_days", 21),
-            "metrics_days": training_config.get("metrics_days", 56),
-            "enable_plotting": training_config.get("enable_plotting", False),
-            "hitl_enabled": training_config.get("hitl_enabled", False),
-            "skip_synthesis": training_config.get("skip_synthesis", False),
-        }
-        
-        initial_state = initialize_analysis_state(
-            analysis_id=analysis_id,
-            user_id=user_id,
-            training_config_id=training_config_id,
-            analysis_config=merged_config
+        # Initialize status tracker
+        tracker = await get_status_tracker(analysis_id)
+        await tracker.log_event(
+            component_name="analysis_engine",
+            component_type=ComponentType.WORKFLOW_NODE,
+            status=ComponentStatus.INITIALIZING,
+            message="Starting new training analysis",
+            details={
+                "user_id": user_id,
+                "training_config_id": training_config_id,
+                "analysis_config": analysis_config
+            }
         )
         
-        # Add training config data to state
-        initial_state["training_config"] = training_config
-        initial_state["training_context"] = training_config.get("analysis_context")
-        initial_state["planning_context"] = training_config.get("planning_context")
-        
-        # Create analysis record in database
-        await self._create_analysis_record(initial_state, db)
-        
-        # Start workflow execution in background
-        asyncio.create_task(self._execute_analysis_workflow(initial_state, db))
-        
-        return analysis_id
+        try:
+            # Initialize model manager with AI mode
+            ai_mode = AIMode(analysis_config.get("ai_mode", "development"))
+            await tracker.log_event(
+                component_name="model_manager",
+                component_type=ComponentType.API_CONNECTION,
+                status=ComponentStatus.INITIALIZING,
+                message=f"Initializing model manager with AI mode: {ai_mode.value}"
+            )
+            
+            self._model_manager = initialize_model_manager(ai_mode)
+            
+            await tracker.log_event(
+                component_name="model_manager", 
+                component_type=ComponentType.API_CONNECTION,
+                status=ComponentStatus.SUCCESS,
+                message="Model manager initialized successfully"
+            )
+            
+            # Load training configuration from database
+            await tracker.log_event(
+                component_name="database",
+                component_type=ComponentType.DATABASE_OPERATION,
+                status=ComponentStatus.RUNNING,
+                message="Loading training configuration from database"
+            )
+            
+            training_config = await self._load_training_config(training_config_id, db)
+            
+            await tracker.log_event(
+                component_name="database",
+                component_type=ComponentType.DATABASE_OPERATION,
+                status=ComponentStatus.SUCCESS,
+                message="Training configuration loaded successfully",
+                details={"config_name": training_config.get("name", "Unknown")}
+            )
+            
+            # Create initial analysis state with correct parameters
+            merged_config = {
+                **analysis_config,
+                "analysis_type": analysis_config.get("analysis_type", "full_analysis"),
+                "ai_mode": training_config.get("ai_mode", analysis_config.get("ai_mode", "development")),
+                "activities_days": training_config.get("activities_days", 21),
+                "metrics_days": training_config.get("metrics_days", 56),
+                "enable_plotting": training_config.get("enable_plotting", False),
+                "hitl_enabled": training_config.get("hitl_enabled", False),
+                "skip_synthesis": training_config.get("skip_synthesis", False),
+            }
+            
+            initial_state = initialize_analysis_state(
+                analysis_id=analysis_id,
+                user_id=user_id,
+                training_config_id=training_config_id,
+                analysis_config=merged_config
+            )
+            
+            # Add training config data to state
+            initial_state["training_config"] = training_config
+            initial_state["training_context"] = training_config.get("analysis_context")
+            initial_state["planning_context"] = training_config.get("planning_context")
+            
+            # Create analysis record in database
+            await tracker.log_event(
+                component_name="database",
+                component_type=ComponentType.DATABASE_OPERATION,
+                status=ComponentStatus.RUNNING,
+                message="Creating analysis record in database"
+            )
+            
+            await self._create_analysis_record(initial_state, db)
+            
+            await tracker.log_event(
+                component_name="database",
+                component_type=ComponentType.DATABASE_OPERATION,
+                status=ComponentStatus.SUCCESS,
+                message="Analysis record created successfully"
+            )
+            
+            # Start workflow execution in background
+            await tracker.log_event(
+                component_name="workflow",
+                component_type=ComponentType.WORKFLOW_NODE,
+                status=ComponentStatus.RUNNING,
+                message="Starting workflow execution"
+            )
+            
+            asyncio.create_task(self._execute_analysis_workflow(initial_state, db, tracker))
+            
+            await tracker.log_event(
+                component_name="analysis_engine",
+                component_type=ComponentType.WORKFLOW_NODE,
+                status=ComponentStatus.SUCCESS,
+                message="Analysis startup completed successfully",
+                details={"analysis_id": analysis_id}
+            )
+            
+            return analysis_id
+            
+        except Exception as e:
+            await tracker.log_event(
+                component_name="analysis_engine",
+                component_type=ComponentType.WORKFLOW_NODE,
+                status=ComponentStatus.ERROR,
+                message="Failed to start analysis",
+                error_details=str(e)
+            )
+            raise
     
     async def _load_training_config(
         self, 
@@ -192,31 +283,72 @@ class AnalysisEngine:
     async def _execute_analysis_workflow(
         self, 
         initial_state: TrainingAnalysisState,
-        db: AsyncSession
+        db: AsyncSession,
+        tracker: Optional[Any] = None
     ) -> None:
         """Execute the complete analysis workflow in background."""
         
+        analysis_id = initial_state["analysis_id"]
+        
         try:
-            print(f"🚀 Starting analysis workflow: {initial_state['analysis_id']}")
+            if tracker:
+                await tracker.log_workflow_node(
+                    node_name="workflow_execution",
+                    status=ComponentStatus.RUNNING,
+                    message="Starting LangGraph workflow execution"
+                )
+            
+            logger.info(f"🚀 Starting analysis workflow: {analysis_id}")
+            
+            # Add tracker to state for agents to use
+            if tracker:
+                initial_state["status_tracker"] = tracker
             
             # Execute the LangGraph workflow
             final_state = await self.workflow.execute_workflow(initial_state)
             
-            # Save final results to database
-            await self._save_analysis_results(final_state, db)
+            if tracker:
+                await tracker.log_workflow_node(
+                    node_name="workflow_execution",
+                    status=ComponentStatus.SUCCESS,
+                    message="LangGraph workflow execution completed successfully"
+                )
             
-            print(f"✅ Analysis workflow completed: {final_state['analysis_id']}")
+            # Save final results to database
+            await self._save_analysis_results(final_state, db, tracker)
+            
+            if tracker:
+                await tracker.log_event(
+                    component_name="analysis_complete",
+                    component_type=ComponentType.WORKFLOW_NODE,
+                    status=ComponentStatus.SUCCESS,
+                    message="Analysis workflow completed successfully"
+                )
+                # Clean up tracker
+                await cleanup_tracker(analysis_id)
+            
+            logger.info(f"✅ Analysis workflow completed: {analysis_id}")
             
         except Exception as e:
-            print(f"❌ Analysis workflow failed: {e}")
+            logger.error(f"❌ Analysis workflow failed: {e}")
+            
+            if tracker:
+                await tracker.log_event(
+                    component_name="workflow_execution",
+                    component_type=ComponentType.WORKFLOW_NODE,
+                    status=ComponentStatus.ERROR,
+                    message="Analysis workflow failed",
+                    error_details=str(e)
+                )
             
             # Update analysis status to failed
-            await self._mark_analysis_failed(initial_state["analysis_id"], str(e), db)
+            await self._mark_analysis_failed(analysis_id, str(e), db)
     
     async def _save_analysis_results(
         self, 
         final_state: TrainingAnalysisState,
-        db: AsyncSession
+        db: AsyncSession,
+        tracker: Optional[Any] = None
     ) -> None:
         """Save analysis results to database."""
         

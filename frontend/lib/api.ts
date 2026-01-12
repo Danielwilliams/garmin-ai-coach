@@ -346,6 +346,22 @@ export const trainingProfileAPI = {
       };
       throw apiError;
     }
+  },
+
+  async testGarminCredentials(email: string, password: string): Promise<any> {
+    try {
+      const response = await api.post('/training-profiles/test-garmin-credentials', {
+        email,
+        password
+      });
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to test Garmin credentials',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
   }
 };
 

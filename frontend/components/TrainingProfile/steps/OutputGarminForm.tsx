@@ -3,6 +3,7 @@ import { Control, Controller, FieldErrors, useWatch } from 'react-hook-form';
 import { FolderOpen, Shield, Eye, EyeOff, CheckCircle, XCircle, Loader } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import { CompleteTrainingProfileFormData } from '@/lib/validations/training';
+import { trainingProfileAPI } from '@/lib/api';
 
 interface OutputGarminFormProps {
   control: Control<CompleteTrainingProfileFormData>;
@@ -34,20 +35,25 @@ const OutputGarminForm: React.FC<OutputGarminFormProps> = ({ control, errors }) 
     setTestingConnection(true);
     setConnectionResult({ status: null, message: '' });
 
-    // Simulate connection test (replace with actual API call)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+      const result = await trainingProfileAPI.testGarminCredentials(garminEmail, garminPassword);
       
-      // Mock successful connection
-      setConnectionResult({
-        status: 'success',
-        message: 'Connection successful! Ready to sync data.',
-        userDisplayName: 'Test User'
-      });
-    } catch (error) {
+      if (result.status === 'success') {
+        setConnectionResult({
+          status: 'success',
+          message: result.message,
+          userDisplayName: result.user_display_name
+        });
+      } else {
+        setConnectionResult({
+          status: 'error',
+          message: result.message || 'Connection failed. Please check your credentials.'
+        });
+      }
+    } catch (error: any) {
       setConnectionResult({
         status: 'error',
-        message: 'Connection failed. Please check your credentials.'
+        message: error.detail || 'Connection failed. Please check your credentials.'
       });
     } finally {
       setTestingConnection(false);

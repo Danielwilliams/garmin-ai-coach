@@ -51,6 +51,14 @@ except Exception as e:
     AI_ENGINE_AVAILABLE = False
     analysis_engine = None
 
+# Import status tracker
+try:
+    from app.services.ai.status_tracker import get_status_tracker
+    STATUS_TRACKER_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Status tracker not available - {e}")
+    STATUS_TRACKER_AVAILABLE = False
+
 router = APIRouter(prefix="/analyses", tags=["analyses"], redirect_slashes=False)
 
 # Debug endpoint
@@ -927,3 +935,152 @@ async def serve_file(file_path: str):
         media_type=media_type,
         filename=full_path.name
     )
+
+
+@router.get("/{analysis_id}/status")
+async def get_analysis_status(
+    analysis_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get comprehensive analysis status including detailed component tracking."""
+    
+    # Verify analysis ownership
+    analysis_query = select(Analysis).where(
+        and_(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id
+        )
+    )
+    analysis_result = await db.execute(analysis_query)
+    analysis = analysis_result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    # Get basic analysis info
+    basic_status = {
+        "analysis_id": str(analysis.id),
+        "status": analysis.status,
+        "progress_percentage": analysis.progress_percentage,
+        "current_node": analysis.current_node,
+        "start_date": analysis.start_date.isoformat() if analysis.start_date else None,
+        "end_date": analysis.end_date.isoformat() if analysis.end_date else None,
+        "estimated_cost": analysis.estimated_cost,
+        "total_tokens": analysis.total_tokens,
+        "error_message": analysis.error_message
+    }
+    
+    # Get detailed status if tracker is available
+    detailed_status = None
+    if STATUS_TRACKER_AVAILABLE:
+        try:
+            tracker = await get_status_tracker(str(analysis_id))
+            detailed_status = tracker.get_status_summary()
+        except Exception as e:
+            print(f"Warning: Could not get detailed status: {e}")
+    
+    return {
+        "basic_status": basic_status,
+        "detailed_status": detailed_status,
+        "has_detailed_tracking": STATUS_TRACKER_AVAILABLE
+    }
+
+
+@router.get("/{analysis_id}/status/timeline")
+async def get_analysis_timeline(
+    analysis_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get detailed timeline of all analysis events."""
+    
+    # Verify analysis ownership
+    analysis_query = select(Analysis).where(
+        and_(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id
+        )
+    )
+    analysis_result = await db.execute(analysis_query)
+    analysis = analysis_result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    if not STATUS_TRACKER_AVAILABLE:
+        return {
+            "timeline": [],
+            "message": "Detailed timeline tracking not available"
+        }
+    
+    try:
+        tracker = await get_status_tracker(str(analysis_id))
+        timeline = tracker.get_detailed_timeline()
+        
+        return {
+            "analysis_id": str(analysis_id),
+            "timeline": timeline,
+            "total_events": len(timeline)
+        }
+        
+    except Exception as e:
+        return {
+            "timeline": [],
+            "error": f"Could not retrieve timeline: {str(e)}"
+        }
+
+
+@router.get("/{analysis_id}/status/components")
+async def get_component_health(
+    analysis_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get health status of all analysis components."""
+    
+    # Verify analysis ownership
+    analysis_query = select(Analysis).where(
+        and_(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id
+        )
+    )
+    analysis_result = await db.execute(analysis_query)
+    analysis = analysis_result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    if not STATUS_TRACKER_AVAILABLE:
+        return {
+            "components": {},
+            "message": "Component health tracking not available"
+        }
+    
+    try:
+        tracker = await get_status_tracker(str(analysis_id))
+        status_summary = tracker.get_status_summary()
+        
+        return {
+            "analysis_id": str(analysis_id),
+            "overall_progress": status_summary.get("overall_progress", 0),
+            "component_health": status_summary.get("component_health", {}),
+            "workflow_progress": status_summary.get("workflow_progress", {}),
+            "recent_errors": status_summary.get("recent_errors", [])
+        }
+        
+    except Exception as e:
+        return {
+            "components": {},
+            "error": f"Could not retrieve component health: {str(e)}"
+        }

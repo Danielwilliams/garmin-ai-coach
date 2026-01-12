@@ -707,3 +707,53 @@ async def test_garmin_connection(
             "error": str(e),
             "is_authenticated": False
         }
+
+
+@router.post("/test-garmin-credentials")
+async def test_garmin_credentials(
+    credentials: GarminCredentialsUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Test Garmin Connect credentials without requiring a training profile."""
+    
+    if not credentials.email or not credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Both email and password are required"
+        )
+    
+    # Test connection
+    try:
+        async with TriathlonCoachDataExtractor(credentials.email, credentials.password) as extractor:
+            # Try to get user profile to test authentication
+            if extractor.authenticated and extractor.user_profile:
+                return {
+                    "status": "success",
+                    "message": "Garmin Connect authentication successful",
+                    "user_display_name": extractor.user_profile.display_name,
+                    "activity_level": extractor.user_profile.activity_level,
+                    "is_authenticated": True
+                }
+            else:
+                return {
+                    "status": "error",
+                    "message": "Garmin Connect authentication failed",
+                    "error": "Invalid credentials or authentication method",
+                    "is_authenticated": False
+                }
+    
+    except GarminConnectError as e:
+        return {
+            "status": "error",
+            "message": "Garmin Connect connection failed",
+            "error": str(e),
+            "is_authenticated": False
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": "Unexpected error testing Garmin Connect",
+            "error": str(e),
+            "is_authenticated": False
+        }

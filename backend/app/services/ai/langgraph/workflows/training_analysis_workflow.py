@@ -5,6 +5,7 @@ with the same parallel processing and conditional routing logic.
 """
 
 from typing import Dict, Any, List
+from datetime import datetime
 from langgraph.graph import Graph, END, StateGraph
 from langgraph.prebuilt import ToolExecutor
 
@@ -13,6 +14,7 @@ from app.services.ai.langgraph.state.training_analysis_state import (
     update_progress,
     add_error
 )
+from app.services.ai.status_tracker import ComponentStatus, ComponentType
 
 # Import all AI agent nodes
 from app.services.ai.langgraph.nodes.metrics_summarizer_node import metrics_summarizer_node
@@ -102,11 +104,34 @@ class TrainingAnalysisWorkflow:
     async def _data_extraction_node(self, state: TrainingAnalysisState) -> TrainingAnalysisState:
         """Extract training data from Garmin Connect and other sources."""
         
+        start_time = datetime.utcnow()
+        tracker = state.get("status_tracker")
+        
         try:
+            if tracker:
+                await tracker.log_data_extraction(
+                    source="garmin_connect",
+                    status=ComponentStatus.RUNNING,
+                    message="Starting Garmin Connect data extraction"
+                )
+            
             state = update_progress(state, "data_extraction", 5.0)
             
             # Get training config from state
             training_config = state.get("training_config", {})
+            
+            if tracker:
+                await tracker.log_event(
+                    component_name="data_extraction",
+                    component_type=ComponentType.DATA_EXTRACTION,
+                    status=ComponentStatus.RUNNING,
+                    message="Loading training configuration",
+                    details={
+                        "activities_days": training_config.get("activities_days", 21),
+                        "metrics_days": training_config.get("metrics_days", 56),
+                        "has_garmin_credentials": bool(training_config.get("garmin_email"))
+                    }
+                )
             
             # Create extraction configuration
             extraction_config = ExtractionConfig(
@@ -119,15 +144,50 @@ class TrainingAnalysisWorkflow:
             garmin_email = training_config.get("garmin_email", "mock_user@example.com")
             garmin_password = training_config.get("garmin_password_encrypted", "mock_password")
             
-            # Decrypt password if it's encrypted (simplified for now)
+            use_real_data = garmin_email != "mock_user@example.com"
+            
+            if tracker:
+                await tracker.log_event(
+                    component_name="credentials",
+                    component_type=ComponentType.EXTERNAL_SERVICE,
+                    status=ComponentStatus.RUNNING,
+                    message=f"{'Processing real Garmin credentials' if use_real_data else 'Using mock data (no credentials provided)'}",
+                    details={"data_source": "garmin_connect" if use_real_data else "mock_data"}
+                )
+            
+            # Decrypt password if it's encrypted
             if garmin_password and garmin_password != "mock_password":
                 try:
                     from app.core.security import decrypt_password
                     garmin_password = decrypt_password(garmin_password)
-                except Exception:
+                    
+                    if tracker:
+                        await tracker.log_event(
+                            component_name="credentials",
+                            component_type=ComponentType.EXTERNAL_SERVICE,
+                            status=ComponentStatus.SUCCESS,
+                            message="Garmin credentials decrypted successfully"
+                        )
+                except Exception as e:
                     # Fall back to mock if decryption fails
                     garmin_password = "mock_password"
                     garmin_email = "mock_user@example.com"
+                    
+                    if tracker:
+                        await tracker.log_event(
+                            component_name="credentials",
+                            component_type=ComponentType.EXTERNAL_SERVICE,
+                            status=ComponentStatus.WARNING,
+                            message="Failed to decrypt Garmin credentials, falling back to mock data",
+                            error_details=str(e)
+                        )
+            
+            if tracker:
+                await tracker.log_data_extraction(
+                    source="garmin_connect",
+                    status=ComponentStatus.RUNNING,
+                    message="Connecting to Garmin Connect API"
+                )
             
             # Extract data using provided or mock credentials
             garmin_data = await extract_garmin_data(
@@ -136,6 +196,30 @@ class TrainingAnalysisWorkflow:
                 config=extraction_config
             )
             
+            # Calculate extraction metrics
+            duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            
+            activities_count = len(garmin_data.activities) if garmin_data.activities else 0
+            daily_stats_count = len(garmin_data.daily_stats) if garmin_data.daily_stats else 0
+            
+            if tracker:
+                await tracker.log_data_extraction(
+                    source="garmin_connect",
+                    status=ComponentStatus.SUCCESS,
+                    message=f"Data extraction completed successfully",
+                    records_extracted=activities_count + daily_stats_count,
+                    data_quality_score=garmin_data.data_completeness_score if hasattr(garmin_data, 'data_completeness_score') else 0.8,
+                    duration_ms=duration_ms
+                )
+                
+                await tracker.log_agent_progress(
+                    agent_name="data_extraction",
+                    status=ComponentStatus.SUCCESS,
+                    message=f"Extracted {activities_count} activities and {daily_stats_count} daily stats",
+                    progress_percentage=100.0,
+                    duration_ms=duration_ms
+                )
+            
             # Store extracted data in state
             state["garmin_data"] = garmin_data.dict()
             state["user_profile"] = garmin_data.user_profile.dict() if garmin_data.user_profile else {}
@@ -143,6 +227,26 @@ class TrainingAnalysisWorkflow:
             return state
             
         except Exception as e:
+            duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            
+            if tracker:
+                await tracker.log_data_extraction(
+                    source="garmin_connect",
+                    status=ComponentStatus.ERROR,
+                    message="Data extraction failed",
+                    duration_ms=duration_ms,
+                    error_details=str(e)
+                )
+                
+                await tracker.log_agent_progress(
+                    agent_name="data_extraction",
+                    status=ComponentStatus.ERROR,
+                    message="Data extraction failed",
+                    progress_percentage=0.0,
+                    duration_ms=duration_ms,
+                    error_details=str(e)
+                )
+            
             return add_error(state, f"Data extraction failed: {str(e)}")
     
     # All node implementations are now handled by imported agent functions
