@@ -854,7 +854,7 @@ async def save_garmin_credentials(
             analysis_context="General training analysis with Garmin Connect data",
             planning_context="Basic training planning and recommendations",
             athlete_name=user_display_name if user_display_name else current_user.full_name,
-            athlete_email=current_user.email,
+            athlete_email=credentials.email,  # Use Garmin email for athlete email
             training_needs="General fitness and performance improvement",
             session_constraints="Standard training availability",
             training_preferences="Balanced training across all disciplines",

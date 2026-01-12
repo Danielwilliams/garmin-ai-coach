@@ -55,6 +55,7 @@ kaleido>=0.2.1,<1.0.0
 
 # Garmin Connect integration
 garminconnect>=0.2.0,<1.0.0
+garth>=0.4.46,<1.0.0
 aiohttp>=3.9.1,<4.0.0
 
 # Scientific computing for data analysis

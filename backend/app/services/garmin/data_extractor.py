@@ -12,7 +12,8 @@ import logging
 import json
 
 # Garmin Connect integration
-from garminconnect import Garmin
+from garminconnect import Garmin, GarminConnectError
+from .connect_client import GarminConnectClient
 
 from app.services.garmin.models import (
     GarminData, 
@@ -59,6 +60,7 @@ class TriathlonCoachDataExtractor:
     def __init__(self, email: str, password: str):
         self.email = email
         self.password = password
+        self.garmin_connect_client = GarminConnectClient()
         self.garmin_client: Optional[Garmin] = None
         self.authenticated = False
         self.user_profile: Optional[UserProfile] = None
@@ -83,11 +85,16 @@ class TriathlonCoachDataExtractor:
             return
         
         try:
-            # Initialize Garmin Connect client
-            self.garmin_client = Garmin(self.email, self.password)
+            # Use OAuth-based connection (same as CLI)
+            success = await self.garmin_connect_client.connect(self.email, self.password)
             
-            # Attempt authentication
-            await self.authenticate()
+            if success:
+                self.garmin_client = self.garmin_connect_client.get_client()
+                await self.authenticate()
+            else:
+                self.authenticated = False
+                logger.error("Failed to connect to Garmin Connect")
+                
         except Exception as e:
             logger.error(f"Failed to initialize Garmin session: {e}")
             self.authenticated = False
@@ -96,42 +103,37 @@ class TriathlonCoachDataExtractor:
     async def close_session(self) -> None:
         """Close Garmin Connect session."""
         
-        if self.garmin_client:
-            try:
-                # Log out from Garmin Connect
-                self.garmin_client.logout()
-            except Exception as e:
-                logger.warning(f"Error during logout: {e}")
-            finally:
-                self.garmin_client = None
-                self.authenticated = False
+        try:
+            await self.garmin_connect_client.disconnect()
+        except Exception as e:
+            logger.warning(f"Error during disconnect: {e}")
+        finally:
+            self.garmin_client = None
+            self.authenticated = False
     
     async def authenticate(self) -> bool:
-        """Authenticate with Garmin Connect."""
+        """Load user profile from authenticated Garmin Connect client."""
         
         try:
             # Check if credentials are provided
             if not self.email or not self.password:
-                logger.error(f"Authentication failed: Username and password are required")
+                logger.error("Authentication failed: Username and password are required")
                 raise ValueError("Username and password are required")
             
             # Check for mock credentials
             if self.email == "mock_user@example.com" or self.password == "mock_password":
                 logger.info("Using mock credentials - skipping real authentication")
-                return False
+                return await self._setup_mock_profile()
             
-            logger.info(f"Authenticating with Garmin Connect for {self.email}")
+            # Client is already authenticated via OAuth, just load profile
+            if not self.garmin_client:
+                raise ValueError("No authenticated Garmin client available")
+                
+            logger.info(f"Loading user profile from Garmin Connect for {self.email}")
             
-            # Authenticate with Garmin Connect
-            # This is a blocking operation, so we run it in a thread pool
+            # Load user profile from authenticated client
             loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, self.garmin_client.login)
-            
-            self.authenticated = True
-            
-            # Load real user profile from Garmin Connect
             user_info = await loop.run_in_executor(None, self.garmin_client.get_user_profile)
-            user_settings = await loop.run_in_executor(None, self.garmin_client.get_user_settings)
             
             # Extract user profile information
             display_name = user_info.get('displayName', 'Unknown User')
@@ -145,10 +147,16 @@ class TriathlonCoachDataExtractor:
                 birth_year = current_year - age
                 birth_date = date(birth_year, 1, 1)  # Approximate birth date
             
-            # Get physical stats
-            gender = user_settings.get('gender', 'unknown').lower()
-            height_cm = user_settings.get('heightCm')
-            weight_kg = user_settings.get('weightKg')
+            # Get physical stats from user profile (fallback to defaults if not available)
+            gender = user_info.get('gender', 'unknown')
+            if isinstance(gender, str):
+                gender = gender.lower()
+            else:
+                gender = 'unknown'
+            
+            # Height and weight might be in user_info or we'll set defaults
+            height_cm = user_info.get('heightCm') or user_info.get('height')
+            weight_kg = user_info.get('weightKg') or user_info.get('weight')
             
             # Determine activity level based on recent activity
             activity_level = "active"  # Default
@@ -167,8 +175,8 @@ class TriathlonCoachDataExtractor:
             except Exception as e:
                 logger.warning(f"Could not determine activity level: {e}")
             
-            # Get timezone from user settings
-            timezone_setting = user_settings.get('timeZone', 'UTC')
+            # Set default timezone
+            timezone_setting = 'UTC'
             
             self.user_profile = UserProfile(
                 user_id=user_id,
@@ -182,12 +190,13 @@ class TriathlonCoachDataExtractor:
                 timezone=timezone_setting
             )
             
-            logger.info(f"Authentication successful for {display_name}")
+            self.authenticated = True
+            logger.info(f"Successfully loaded profile for {display_name}")
             return True
             
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"Authentication failed: {error_msg}")
+            logger.error(f"Failed to load user profile: {error_msg}")
             self.authenticated = False
             
             # For testing purposes, re-raise specific authentication errors
