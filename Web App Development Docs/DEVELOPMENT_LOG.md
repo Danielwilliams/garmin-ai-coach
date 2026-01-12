@@ -1,5 +1,107 @@
 # 📋 Garmin AI Coach Web App Development Log
 
+## 🎯 **CORE DEVELOPMENT PRINCIPLE**
+
+> **The CLI application functions perfectly and is our gold standard. We must mimic it as closely as possible while making minor UI improvements for the web interface. Any deviation from the CLI's working logic risks breaking functionality.**
+
+### Key Guidelines:
+- **Authentication**: Use identical OAuth token persistence patterns from CLI
+- **Data Extraction**: Mirror exact API calls and data structures
+- **AI Analysis**: Preserve same workflow orchestration and agent interactions  
+- **Error Handling**: Replicate CLI's robust fallback mechanisms
+- **Configuration**: Maintain same parameter structures and defaults
+
+---
+
+## Session: 2026-01-12 - CLI-Style Authentication Implementation
+
+### 🔧 **Implemented CLI-Style OAuth Authentication**
+
+**Problem**: Web app was attempting fresh authentication every time, while the CLI uses OAuth token persistence for reliable authentication.
+
+**Solution**: Replicated exact CLI authentication pattern using `garth` library:
+
+#### **New OAuth Client Implementation**
+Created `backend/app/services/garmin/connect_client.py` - Direct replication of CLI's `GarminConnectClient`:
+
+```python
+class GarminConnectClient:
+    """Matches CLI's OAuth token persistence exactly."""
+    
+    def __init__(self, token_dir: Optional[str] = None):
+        # Same token directory hierarchy as CLI
+        self._token_dir = Path(
+            token_dir
+            or os.getenv("GARMINCONNECT_TOKENS")
+            or os.getenv("GARTH_HOME") 
+            or os.path.expanduser("~/.garminconnect")
+        )
+    
+    def _try_resume_tokens(self) -> bool:
+        """Resume existing OAuth tokens - same as CLI"""
+        garth.resume(str(self._token_dir))
+    
+    def _fresh_login(self, email: str, password: str, mfa_callback=None):
+        """Fresh login with MFA support - same as CLI"""
+        garth.login(email, password, otp=code if mfa_callback else None)
+        garth.save(str(self._token_dir))
+```
+
+#### **Authentication Flow (CLI Pattern)**
+1. **Token Resume First**: Try existing OAuth tokens (same as CLI)
+2. **Fresh Login Fallback**: Only prompt credentials when tokens invalid (same as CLI)  
+3. **Auto-Retry on 401/403**: Automatic token refresh (same as CLI)
+4. **MFA Support**: Built-in 2FA handling (same as CLI)
+
+**Files Modified**:
+- `backend/requirements.txt:58` - Added `garth>=0.4.46,<1.0.0` (CLI dependency)
+- `backend/app/services/garmin/connect_client.py` - New OAuth client (CLI replication)
+- `backend/app/services/garmin/data_extractor.py:63,88-94` - Updated to use OAuth client
+
+### 🐛 **Fixed Garmin API Compatibility**
+
+**Problem**: `'Garmin' object has no attribute 'get_user_settings'` - web app was calling non-existent API method.
+
+**Solution**: Analyzed CLI implementation and used only supported API methods:
+- **Removed**: `get_user_settings()` call (doesn't exist)
+- **Used**: Only `get_user_profile()` with fallback defaults (matches CLI)
+
+**Files Modified**:
+- `backend/app/services/garmin/data_extractor.py:133-191` - Fixed API calls to match CLI
+
+### 🔐 **Ensured Credential Separation** 
+
+**Problem**: System was incorrectly mixing user account emails with Garmin Connect credentials.
+
+**Solution**: Clear separation following CLI pattern:
+- **User Account**: Web application login credentials
+- **Garmin Connect**: Separate athletic performance data credentials  
+- **No Auto-Population**: Forms start empty (matches CLI interactive prompts)
+
+**Critical Fix**:
+```python
+# Before (WRONG):
+athlete_email=current_user.email  # User's web app email
+
+# After (CORRECT - matches CLI):
+athlete_email=credentials.email   # User's Garmin Connect email
+```
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:857` - Fixed credential separation
+- `frontend/components/Settings/GarminConnectConfig.tsx:64-67` - Ensured empty defaults
+
+### 🎛️ **Enhanced Error Handling (CLI-Style)**
+
+**Improvements**: Enhanced error messages while maintaining CLI's robust fallback behavior:
+- **401 Unauthorized**: Specific guidance about 2FA and credential verification
+- **Graceful Degradation**: Falls back to mock data when authentication fails (same as CLI)
+- **Troubleshooting Tips**: User-friendly guidance without breaking CLI logic
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:745-786` - Enhanced error handling
+- `frontend/components/Settings/GarminConnectConfig.tsx:372-384` - Added troubleshooting UI
+
 ## Session: 2026-01-12 - Garmin Authentication & Analysis Fixes
 
 ### Critical Issues Resolved
