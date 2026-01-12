@@ -39,6 +39,12 @@ interface ConnectionStatus {
   activityLevel?: string;
 }
 
+interface ExistingConnection {
+  email: string;
+  isConnected: boolean;
+  lastSync?: string;
+}
+
 const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
   profileId,
   onBack,
@@ -49,7 +55,7 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
     status: 'idle',
     message: ''
   });
-  const [existingConnection, setExistingConnection] = useState<any>(null);
+  const [existingConnection, setExistingConnection] = useState<ExistingConnection | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(false);
 
   const form = useForm<GarminConfigForm>({
@@ -168,7 +174,7 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
           activityLevel: result.activity_level
         });
         
-        setExistingConnection(prev => ({ ...prev, isConnected: true }));
+        setExistingConnection((prev: ExistingConnection | null) => prev ? { ...prev, isConnected: true } : null);
       } else {
         setConnectionStatus({
           status: 'error',
