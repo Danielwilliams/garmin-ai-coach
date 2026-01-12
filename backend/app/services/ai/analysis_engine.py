@@ -238,12 +238,18 @@ class AnalysisEngine:
             # Update main analysis record
             progress = final_state.get("progress", {})
             
+            # Handle progress object (could be dict or AnalysisProgress object)
+            if isinstance(progress, dict):
+                progress_percentage = progress.get("overall_percentage", 100)
+            else:
+                progress_percentage = getattr(progress, "progress_percentage", 100)
+            
             update_stmt = (
                 update(Analysis)
                 .where(Analysis.id == analysis_id)
                 .values(
                     status="completed" if final_state.get("workflow_complete") else "failed",
-                    progress_percentage=int(progress.get("overall_percentage", 100)),
+                    progress_percentage=int(progress_percentage),
                     summary=final_state.get("synthesis_analysis"),
                     recommendations=self._extract_recommendations(final_state),
                     weekly_plan=final_state.get("weekly_training_plan"),
