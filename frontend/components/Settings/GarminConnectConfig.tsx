@@ -37,6 +37,7 @@ interface ConnectionStatus {
   message: string;
   userDisplayName?: string;
   activityLevel?: string;
+  troubleshooting?: string[];
 }
 
 interface ExistingConnection {
@@ -147,13 +148,15 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
       } else {
         setConnectionStatus({
           status: 'error',
-          message: result.message || 'Connection failed. Please check your credentials.'
+          message: result.message || 'Connection failed. Please check your credentials.',
+          troubleshooting: result.troubleshooting || []
         });
       }
     } catch (error: any) {
       setConnectionStatus({
         status: 'error',
-        message: error.detail || 'Connection failed. Please check your credentials.'
+        message: error.detail || 'Connection failed. Please check your credentials.',
+        troubleshooting: error.troubleshooting || []
       });
     }
   };
@@ -366,6 +369,19 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
                     )}
                   </div>
                 )}
+                {connectionStatus.troubleshooting && connectionStatus.troubleshooting.length > 0 && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <h5 className="text-sm font-medium text-yellow-800 mb-2">Troubleshooting Tips:</h5>
+                    <ul className="text-sm text-yellow-700 space-y-1">
+                      {connectionStatus.troubleshooting.map((tip, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="mr-2">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -394,10 +410,12 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
             <div className="text-sm text-yellow-800">
               <h4 className="font-medium">Important Requirements</h4>
               <ul className="mt-2 space-y-1">
+                <li>• <strong>Two-Factor Authentication (2FA) must be disabled</strong> for API access</li>
                 <li>• Use your regular Garmin Connect credentials (not app passwords)</li>
-                <li>• Two-factor authentication should be disabled for API access</li>
-                <li>• Ensure your account has recent activity data</li>
+                <li>• Ensure your account is not locked or suspended</li>
+                <li>• Verify you can log into garmin.com/garmin-connect normally</li>
                 <li>• Connection may take 30-60 seconds to establish</li>
+                <li>• Wait 15-30 minutes between multiple authentication attempts</li>
               </ul>
             </div>
           </div>

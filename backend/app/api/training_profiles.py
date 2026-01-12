@@ -743,19 +743,46 @@ async def test_garmin_credentials(
                 }
     
     except GarminConnectError as e:
-        return {
-            "status": "error",
-            "message": "Garmin Connect connection failed",
-            "error": str(e),
-            "is_authenticated": False
-        }
+        error_msg = str(e)
+        
+        # Provide specific guidance based on error type
+        if "401" in error_msg or "Unauthorized" in error_msg:
+            return {
+                "status": "error",
+                "message": "Garmin Connect authentication failed",
+                "error": "Authentication was rejected by Garmin Connect",
+                "is_authenticated": False,
+                "troubleshooting": [
+                    "Verify your Garmin Connect email and password are correct",
+                    "Check if Two-Factor Authentication (2FA) is enabled - API access requires 2FA to be disabled",
+                    "Try logging into garmin.com/garmin-connect to verify your account works",
+                    "Wait 15-30 minutes if you've made multiple authentication attempts",
+                    "Ensure your account is not locked or suspended"
+                ]
+            }
+        else:
+            return {
+                "status": "error", 
+                "message": "Garmin Connect connection failed",
+                "error": error_msg,
+                "is_authenticated": False,
+                "troubleshooting": [
+                    "Check your internet connection",
+                    "Try again in a few minutes",
+                    "Verify Garmin Connect services are operational"
+                ]
+            }
         
     except Exception as e:
         return {
             "status": "error",
-            "message": "Unexpected error testing Garmin Connect",
+            "message": "Unexpected error testing Garmin Connect", 
             "error": str(e),
-            "is_authenticated": False
+            "is_authenticated": False,
+            "troubleshooting": [
+                "Please try again in a few minutes",
+                "If the issue persists, contact support"
+            ]
         }
 
 

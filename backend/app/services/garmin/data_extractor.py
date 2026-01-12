@@ -186,11 +186,18 @@ class TriathlonCoachDataExtractor:
             return True
             
         except Exception as e:
-            logger.error(f"Authentication failed: {e}")
-            # Fallback to mock data if authentication fails
-            logger.warning("Falling back to mock data due to authentication failure")
+            error_msg = str(e)
+            logger.error(f"Authentication failed: {error_msg}")
             self.authenticated = False
-            return await self._setup_mock_profile()
+            
+            # For testing purposes, re-raise specific authentication errors
+            # This allows the API to provide better error messages to users
+            if "401" in error_msg or "Unauthorized" in error_msg:
+                raise ValueError(f"Authentication failed: {error_msg}")
+            else:
+                # For other errors, we can fall back to mock data
+                logger.warning("Falling back to mock data due to authentication failure")
+                return await self._setup_mock_profile()
     
     async def _setup_mock_profile(self) -> bool:
         """Setup mock profile as fallback when real authentication fails."""
