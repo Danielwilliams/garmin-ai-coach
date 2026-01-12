@@ -191,7 +191,7 @@ export const authAPI = {
 export const analysisAPI = {
   async getAnalyses(): Promise<any[]> {
     try {
-      const response = await api.get('/analyses');
+      const response = await api.get('/analyses/');
       return response.data;
     } catch (error: any) {
       const apiError: ApiError = {
@@ -217,7 +217,7 @@ export const analysisAPI = {
 
   async createAnalysis(data: any): Promise<any> {
     try {
-      const response = await api.post('/analyses', data);
+      const response = await api.post('/analyses/', data);
       return response.data;
     } catch (error: any) {
       const apiError: ApiError = {
