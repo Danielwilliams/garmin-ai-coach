@@ -1,13 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
+import GarminConnectionStatus from '@/components/Dashboard/GarminConnectionStatus';
+import GarminConnectConfig from '@/components/Settings/GarminConnectConfig';
 
 const Dashboard: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
+  const [showGarminConfig, setShowGarminConfig] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -30,10 +33,37 @@ const Dashboard: React.FC = () => {
     router.push('/profile');
   };
 
+  const handleConnectGarmin = () => {
+    setShowGarminConfig(true);
+  };
+
+  const handleGarminConfigBack = () => {
+    setShowGarminConfig(false);
+  };
+
+  const handleGarminSuccess = (userInfo: any) => {
+    setShowGarminConfig(false);
+    // Could show a success notification here
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show Garmin config screen if requested
+  if (showGarminConfig) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <GarminConnectConfig
+            onBack={handleGarminConfigBack}
+            onConnectionSuccess={handleGarminSuccess}
+          />
+        </div>
       </div>
     );
   }
@@ -167,6 +197,12 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* Garmin Connection Status */}
+          <GarminConnectionStatus 
+            onConfigureClick={handleConnectGarmin}
+            className="mb-6"
+          />
+
           {/* Quick Actions */}
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
@@ -174,7 +210,10 @@ const Dashboard: React.FC = () => {
                 Quick Actions
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <button className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button 
+                  onClick={handleConnectGarmin}
+                  className="relative rounded-lg border border-gray-300 bg-white px-6 py-4 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
                   <div>
                     <span className="block text-sm font-medium text-gray-900">
                       Connect Garmin
