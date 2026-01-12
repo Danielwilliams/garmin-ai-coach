@@ -9,11 +9,15 @@ const GarminSettingsPage: React.FC = () => {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
+  console.log('Garmin settings page loaded');
+
   const handleBack = () => {
+    console.log('Navigating back from Garmin settings');
     router.back();
   };
 
   const handleSuccess = (userInfo: any) => {
+    console.log('Garmin connection successful:', userInfo);
     // Navigate back to dashboard or show success message
     router.push('/dashboard');
   };

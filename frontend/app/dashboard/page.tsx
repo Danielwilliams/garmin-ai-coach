@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import GarminConnectionStatus from '@/components/Dashboard/GarminConnectionStatus';
-import GarminConnectConfig from '@/components/Settings/GarminConnectConfig';
 
 const Dashboard: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
-  const [showGarminConfig, setShowGarminConfig] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -34,17 +32,10 @@ const Dashboard: React.FC = () => {
   };
 
   const handleConnectGarmin = () => {
-    setShowGarminConfig(true);
+    console.log('Connect Garmin button clicked - navigating to /settings/garmin');
+    router.push('/settings/garmin');
   };
 
-  const handleGarminConfigBack = () => {
-    setShowGarminConfig(false);
-  };
-
-  const handleGarminSuccess = (userInfo: any) => {
-    setShowGarminConfig(false);
-    // Could show a success notification here
-  };
 
   if (isLoading) {
     return (
@@ -54,19 +45,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // Show Garmin config screen if requested
-  if (showGarminConfig) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <GarminConnectConfig
-            onBack={handleGarminConfigBack}
-            onConnectionSuccess={handleGarminSuccess}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -38,8 +38,10 @@ const GarminConnectionStatus: React.FC<GarminConnectionStatusProps> = ({
 
   const loadConnections = async () => {
     try {
+      console.log('Loading Garmin connections...');
       // Get all training profiles to check for Garmin connections
       const profiles = await trainingProfileAPI.getProfiles();
+      console.log('Loaded profiles:', profiles);
       
       const garminConnections: GarminConnection[] = profiles
         .filter((profile: any) => profile.garmin_email)
