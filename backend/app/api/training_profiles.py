@@ -757,3 +757,126 @@ async def test_garmin_credentials(
             "error": str(e),
             "is_authenticated": False
         }
+
+
+@router.post("/save-garmin-credentials")
+async def save_garmin_credentials(
+    credentials: GarminCredentialsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Save Garmin Connect credentials to user's default profile or create one."""
+    
+    if not credentials.email or not credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Both email and password are required"
+        )
+    
+    # First test the credentials
+    try:
+        async with TriathlonCoachDataExtractor(credentials.email, credentials.password) as extractor:
+            if not extractor.authenticated or not extractor.user_profile:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Garmin Connect authentication failed. Please check your credentials."
+                )
+                
+            user_display_name = extractor.user_profile.display_name
+            activity_level = extractor.user_profile.activity_level
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Garmin Connect authentication failed: {str(e)}"
+        )
+    
+    # Encrypt the password
+    try:
+        garmin_password_encrypted = encrypt_password(credentials.password)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to encrypt Garmin credentials"
+        )
+    
+    # Look for existing default profile
+    query = select(TrainingConfig).where(
+        and_(
+            TrainingConfig.user_id == current_user.id,
+            TrainingConfig.name == "Default Garmin Profile"
+        )
+    ).order_by(TrainingConfig.created_at.desc())
+    
+    result = await db.execute(query)
+    existing_profile = result.scalar_one_or_none()
+    
+    if existing_profile:
+        # Update existing default profile
+        existing_profile.garmin_email = credentials.email
+        existing_profile.garmin_password_encrypted = garmin_password_encrypted
+        existing_profile.garmin_is_connected = True
+        existing_profile.athlete_name = user_display_name if user_display_name else existing_profile.athlete_name
+        await db.commit()
+        profile_id = existing_profile.id
+    else:
+        # Create new default profile with Garmin credentials
+        default_profile = TrainingConfig(
+            id=uuid4(),
+            user_id=current_user.id,
+            name="Default Garmin Profile",
+            analysis_context="General training analysis with Garmin Connect data",
+            planning_context="Basic training planning and recommendations",
+            athlete_name=user_display_name if user_display_name else current_user.full_name,
+            athlete_email=current_user.email,
+            training_needs="General fitness and performance improvement",
+            session_constraints="Standard training availability",
+            training_preferences="Balanced training across all disciplines",
+            target_event="General fitness goals",
+            target_distance="Mixed distances",
+            target_date=datetime.utcnow() + timedelta(days=90),
+            current_fitness_level=5,
+            weekly_hours=6,
+            sessions_per_week=4,
+            activities_days=21,
+            metrics_days=56,
+            ai_mode="development",
+            enable_plotting=False,
+            hitl_enabled=False,
+            skip_synthesis=False,
+            output_directory="/tmp/garmin_analysis",
+            garmin_email=credentials.email,
+            garmin_password_encrypted=garmin_password_encrypted,
+            garmin_is_connected=True,
+            is_active=True
+        )
+        
+        db.add(default_profile)
+        await db.flush()
+        profile_id = default_profile.id
+        
+        # Create default training zones
+        default_zones = [
+            {"discipline": "swimming", "metric": "pace", "value": 120},  # 2:00/100m
+            {"discipline": "cycling", "metric": "power", "value": 200},   # 200W
+            {"discipline": "running", "metric": "pace", "value": 300}     # 5:00/km
+        ]
+        
+        for zone_data in default_zones:
+            zone = TrainingZone(
+                training_config_id=default_profile.id,
+                discipline=zone_data["discipline"],
+                metric=zone_data["metric"],
+                value=zone_data["value"]
+            )
+            db.add(zone)
+    
+    await db.commit()
+    
+    return {
+        "status": "success",
+        "message": "Garmin Connect credentials saved successfully",
+        "profile_id": str(profile_id),
+        "user_display_name": user_display_name,
+        "activity_level": activity_level,
+        "is_authenticated": True
+    }

@@ -122,6 +122,15 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
           activityLevel: result.activity_level
         });
         
+        // Save credentials to user's default profile
+        try {
+          await trainingProfileAPI.saveGarminCredentials(data.email, data.password);
+          console.log('Garmin credentials saved to default profile');
+        } catch (saveError: any) {
+          console.error('Failed to save Garmin credentials:', saveError);
+          // Don't fail the connection test if saving fails
+        }
+        
         if (onConnectionSuccess) {
           onConnectionSuccess({
             email: data.email,

@@ -362,6 +362,22 @@ export const trainingProfileAPI = {
       };
       throw apiError;
     }
+  },
+
+  async saveGarminCredentials(email: string, password: string): Promise<any> {
+    try {
+      const response = await api.post('/training-profiles/save-garmin-credentials', {
+        email,
+        password
+      });
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to save Garmin credentials',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
   }
 };
 

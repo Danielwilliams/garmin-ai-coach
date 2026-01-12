@@ -141,18 +141,29 @@ class TrainingAnalysisWorkflow:
             )
             
             # Get Garmin credentials from training config or use mock data
-            garmin_email = training_config.get("garmin_email", "mock_user@example.com")
-            garmin_password = training_config.get("garmin_password_encrypted", "mock_password")
+            garmin_email = training_config.get("garmin_email")
+            garmin_password = training_config.get("garmin_password_encrypted")
             
-            use_real_data = garmin_email != "mock_user@example.com"
+            # Check if we have real credentials
+            has_real_credentials = garmin_email and garmin_password and garmin_email != "mock_user@example.com"
+            
+            if not has_real_credentials:
+                garmin_email = "mock_user@example.com"
+                garmin_password = "mock_password"
+            
+            use_real_data = has_real_credentials
             
             if tracker:
                 await tracker.log_event(
                     component_name="credentials",
                     component_type=ComponentType.EXTERNAL_SERVICE,
-                    status=ComponentStatus.RUNNING,
-                    message=f"{'Processing real Garmin credentials' if use_real_data else 'Using mock data (no credentials provided)'}",
-                    details={"data_source": "garmin_connect" if use_real_data else "mock_data"}
+                    status=ComponentStatus.WARNING if not has_real_credentials else ComponentStatus.RUNNING,
+                    message=f"{'Processing real Garmin credentials' if use_real_data else 'No Garmin credentials found - using mock data. Please configure Garmin Connect in settings.'}",
+                    details={
+                        "data_source": "garmin_connect" if use_real_data else "mock_data",
+                        "has_credentials": has_real_credentials,
+                        "garmin_email": garmin_email if use_real_data else "none"
+                    }
                 )
             
             # Decrypt password if it's encrypted

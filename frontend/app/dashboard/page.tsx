@@ -33,7 +33,16 @@ const Dashboard: React.FC = () => {
 
   const handleConnectGarmin = () => {
     console.log('Connect Garmin button clicked - navigating to /settings/garmin');
-    router.push('/settings/garmin');
+    console.log('Router object:', router);
+    try {
+      router.push('/settings/garmin');
+      console.log('Navigation command executed');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to window.location if router fails
+      console.log('Falling back to window.location');
+      window.location.href = '/settings/garmin';
+    }
   };
 
 

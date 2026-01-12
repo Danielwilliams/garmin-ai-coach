@@ -93,8 +93,12 @@ Provide detailed, evidence-based analysis that helps optimize training execution
             training_config = state.get("training_config", {})
             user_profile = state.get("user_profile", {})
             
+            # Ensure garmin_data is a dictionary
+            if garmin_data is None:
+                garmin_data = {}
+            
             # Check if we have activity data
-            activities = garmin_data.get("activities", [])
+            activities = garmin_data.get("activities", []) if garmin_data else []
             if not activities:
                 warning = "No activity data available for pattern analysis"
                 logger.warning(warning)
