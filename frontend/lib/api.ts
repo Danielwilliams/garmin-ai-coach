@@ -333,6 +333,19 @@ export const trainingProfileAPI = {
       };
       throw apiError;
     }
+  },
+
+  async testGarminConnection(profileId: string): Promise<any> {
+    try {
+      const response = await api.post(`/training-profiles/${profileId}/test-garmin-connection`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = {
+        detail: error.response?.data?.detail || 'Failed to test Garmin connection',
+        status: error.response?.status
+      };
+      throw apiError;
+    }
   }
 };
 

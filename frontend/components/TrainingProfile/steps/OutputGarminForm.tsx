@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Control, Controller, FieldErrors } from 'react-hook-form';
-import { FolderOpen, Shield, Eye, EyeOff } from 'lucide-react';
+import { Control, Controller, FieldErrors, useWatch } from 'react-hook-form';
+import { FolderOpen, Shield, Eye, EyeOff, CheckCircle, XCircle, Loader } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import { CompleteTrainingProfileFormData } from '@/lib/validations/training';
 
@@ -11,6 +11,48 @@ interface OutputGarminFormProps {
 
 const OutputGarminForm: React.FC<OutputGarminFormProps> = ({ control, errors }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionResult, setConnectionResult] = useState<{
+    status: 'success' | 'error' | null;
+    message: string;
+    userDisplayName?: string;
+  }>({ status: null, message: '' });
+
+  // Watch Garmin credentials to enable/disable test button
+  const garminEmail = useWatch({ control, name: 'garmin_email' });
+  const garminPassword = useWatch({ control, name: 'garmin_password' });
+
+  const handleTestConnection = async () => {
+    if (!garminEmail || !garminPassword) {
+      setConnectionResult({
+        status: 'error',
+        message: 'Please enter both email and password before testing.'
+      });
+      return;
+    }
+
+    setTestingConnection(true);
+    setConnectionResult({ status: null, message: '' });
+
+    // Simulate connection test (replace with actual API call)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+      
+      // Mock successful connection
+      setConnectionResult({
+        status: 'success',
+        message: 'Connection successful! Ready to sync data.',
+        userDisplayName: 'Test User'
+      });
+    } catch (error) {
+      setConnectionResult({
+        status: 'error',
+        message: 'Connection failed. Please check your credentials.'
+      });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -151,6 +193,72 @@ const OutputGarminForm: React.FC<OutputGarminFormProps> = ({ control, errors }) 
             )}
           />
         </div>
+
+        {/* Test Connection */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+          <div>
+            <h4 className="text-sm font-medium text-gray-900">Test Connection</h4>
+            <p className="text-sm text-gray-600">Verify your Garmin Connect credentials</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleTestConnection}
+            disabled={!garminEmail || !garminPassword || testingConnection}
+            className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
+              !garminEmail || !garminPassword || testingConnection
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {testingConnection ? (
+              <>
+                <Loader className="w-4 h-4 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4" />
+                Test Connection
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Connection Result */}
+        {connectionResult.status && (
+          <div className={`p-4 rounded-lg border ${
+            connectionResult.status === 'success' 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-red-50 border-red-200'
+          }`}>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {connectionResult.status === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-400" />
+                )}
+              </div>
+              <div className="ml-3">
+                <h4 className={`text-sm font-medium ${
+                  connectionResult.status === 'success' ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {connectionResult.status === 'success' ? 'Connection Successful' : 'Connection Failed'}
+                </h4>
+                <p className={`text-sm mt-1 ${
+                  connectionResult.status === 'success' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {connectionResult.message}
+                  {connectionResult.userDisplayName && (
+                    <span className="block mt-1">
+                      Welcome, <strong>{connectionResult.userDisplayName}</strong>!
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex">

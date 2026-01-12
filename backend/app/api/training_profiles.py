@@ -23,6 +23,7 @@ from app.schemas.training_profile import (
 )
 from app.core.security import encrypt_password, decrypt_password
 from app.dependencies import get_current_user
+from app.services.garmin.data_extractor import TriathlonCoachDataExtractor, GarminConnectError
 
 router = APIRouter(prefix="/training-profiles", tags=["training-profiles"], redirect_slashes=False)
 
@@ -613,3 +614,96 @@ async def start_ai_analysis(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to start AI analysis: {str(e)}"
         )
+
+
+@router.post("/{profile_id}/test-garmin-connection")
+async def test_garmin_connection(
+    profile_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Test Garmin Connect authentication for a training profile."""
+    
+    # Verify profile ownership
+    query = select(TrainingConfig).where(
+        and_(
+            TrainingConfig.id == profile_id,
+            TrainingConfig.user_id == current_user.id
+        )
+    )
+    result = await db.execute(query)
+    training_config = result.scalar_one_or_none()
+    
+    if not training_config:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Training profile not found"
+        )
+    
+    # Check if Garmin credentials are set
+    if not training_config.garmin_email or not training_config.garmin_password_encrypted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Garmin Connect credentials not configured for this profile"
+        )
+    
+    # Decrypt password for testing
+    try:
+        garmin_password = decrypt_password(training_config.garmin_password_encrypted)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to decrypt Garmin credentials"
+        )
+    
+    # Test connection
+    try:
+        async with TriathlonCoachDataExtractor(training_config.garmin_email, garmin_password) as extractor:
+            # Try to get user profile to test authentication
+            if extractor.authenticated and extractor.user_profile:
+                # Update connection status in database
+                training_config.garmin_is_connected = True
+                await db.commit()
+                
+                return {
+                    "status": "success",
+                    "message": "Garmin Connect authentication successful",
+                    "user_display_name": extractor.user_profile.display_name,
+                    "activity_level": extractor.user_profile.activity_level,
+                    "is_authenticated": True
+                }
+            else:
+                # Authentication failed
+                training_config.garmin_is_connected = False
+                await db.commit()
+                
+                return {
+                    "status": "error",
+                    "message": "Garmin Connect authentication failed",
+                    "error": "Invalid credentials or authentication method",
+                    "is_authenticated": False
+                }
+    
+    except GarminConnectError as e:
+        # Update connection status
+        training_config.garmin_is_connected = False
+        await db.commit()
+        
+        return {
+            "status": "error",
+            "message": "Garmin Connect connection failed",
+            "error": str(e),
+            "is_authenticated": False
+        }
+        
+    except Exception as e:
+        # Update connection status
+        training_config.garmin_is_connected = False
+        await db.commit()
+        
+        return {
+            "status": "error",
+            "message": "Unexpected error testing Garmin Connect",
+            "error": str(e),
+            "is_authenticated": False
+        }
