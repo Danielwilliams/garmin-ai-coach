@@ -68,9 +68,20 @@ app.include_router(training_profiles_router, prefix="/api/v1")
 
 # Include analyses router only if available
 if ANALYSES_AVAILABLE and analyses_router is not None:
-    app.include_router(analyses_router, prefix="/api/v1")
-    print("✅ Analyses router registered")
-else:
+    try:
+        app.include_router(analyses_router, prefix="/api/v1")
+        print("✅ Analyses router registered")
+        # Debug: Print registered routes from this router
+        print(f"🔍 Analyses router has {len(analyses_router.routes)} routes:")
+        for route in analyses_router.routes:
+            if hasattr(route, 'path') and hasattr(route, 'methods'):
+                print(f"  - {list(route.methods)} {route.path}")
+    except Exception as e:
+        print(f"❌ Failed to register analyses router: {e}")
+        ANALYSES_AVAILABLE = False
+        analyses_router = None
+
+if not ANALYSES_AVAILABLE or analyses_router is None:
     print("❌ Analyses router not available - adding fallback routes")
     
     # Add minimal fallback routes directly to main app
@@ -235,3 +246,9 @@ async def debug_routes():
                 "name": getattr(route, 'name', 'unknown')
             })
     return {"routes": routes}
+
+# Test if analyses debug endpoint is reachable
+@app.get("/debug/analyses-test")
+async def debug_analyses_test():
+    """Test if analyses endpoints are reachable."""
+    return {"message": "Debug analyses test working", "status": "ok"}
