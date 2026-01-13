@@ -12,7 +12,7 @@ import logging
 import json
 
 # Garmin Connect integration
-from garminconnect import Garmin, GarminConnectError
+from garminconnect import Garmin
 from .connect_client import GarminConnectClient
 
 from app.services.garmin.models import (
