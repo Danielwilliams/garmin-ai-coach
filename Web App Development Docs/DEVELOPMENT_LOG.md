@@ -73,6 +73,40 @@ from datetime import datetime, timedelta
 
 **Status**: ✅ Fixed and committed (commit: 53f95be)
 
+### 🐛 **Fixed TrainingConfig Invalid Fields**
+
+**Problem**: `TypeError: 'target_event' is an invalid keyword argument for TrainingConfig` when trying to save Garmin credentials.
+
+**Root Cause**: The `save-garmin-credentials` endpoint was trying to create a TrainingConfig with fields that don't exist in the database model: `target_event`, `target_distance`, `target_date`, `current_fitness_level`, `weekly_hours`, `sessions_per_week`.
+
+**Solution**: Removed invalid fields from default profile creation, keeping only fields that exist in the TrainingConfig model.
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:851-879` - Removed invalid field assignments
+
+**Status**: ✅ Fixed and committed (commit: 121d041)
+
+### 🐛 **Fixed Form Auto-Populating Credentials**
+
+**Problem**: Garmin Connect configuration form was auto-filling email from existing profile, causing confusion between app credentials and Garmin credentials.
+
+**Root Cause**: When a profile existed, the form pre-filled the email field with `profile.garmin_email` which could be the user's app email if they previously saved it incorrectly.
+
+**Solution**: Removed form pre-filling logic. User must now explicitly enter Garmin credentials every time, preventing confusion.
+```typescript
+// Before:
+form.setValue('email', profile.garmin_email);  // Auto-filled from profile
+
+// After:
+// Don't pre-fill form - user must explicitly enter credentials
+// This prevents confusion between app credentials and Garmin credentials
+```
+
+**Files Modified**:
+- `frontend/components/Settings/GarminConnectConfig.tsx:85-93` - Removed auto-fill logic
+
+**Status**: ✅ Fixed and committed (commit: 121d041)
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
