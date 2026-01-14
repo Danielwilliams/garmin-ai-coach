@@ -13,6 +13,59 @@
 
 ---
 
+## Session: 2026-01-14 - Critical Railway Deployment Fixes
+
+### 🐛 **Fixed Railway Crash - GarminConnectError Import**
+
+**Problem**: Railway deployment was crashing on startup with `ImportError: cannot import name 'GarminConnectError' from 'garminconnect'`.
+
+**Root Cause**: The code was attempting to import `GarminConnectError` from the external `garminconnect` package, but this exception class doesn't exist in that library. A custom `GarminConnectError` was already defined in the file but the incorrect import was still present.
+
+**Solution**: Removed the incorrect import from the garminconnect package.
+```python
+# Before (WRONG):
+from garminconnect import Garmin, GarminConnectError
+
+# After (CORRECT):
+from garminconnect import Garmin
+```
+
+**Files Modified**:
+- `backend/app/services/garmin/data_extractor.py:15` - Removed incorrect GarminConnectError import
+- Custom `GarminConnectError` exception already defined at line 48 is used throughout the code
+
+**Status**: ✅ Fixed and committed (commit: fb3687f)
+
+### 🐛 **Fixed Garmin Credentials Not Saving After Test**
+
+**Problem**: Users could successfully test Garmin credentials, but after the test the connection wouldn't stay connected. The credentials weren't being saved to the database.
+
+**Root Cause**: The `save-garmin-credentials` endpoint was crashing with `NameError: name 'uuid4' is not defined` when trying to create a new default profile.
+
+**Solution**: Added missing `uuid4` import to the imports in `training_profiles.py`.
+```python
+# Before:
+from uuid import UUID
+
+# After:
+from uuid import UUID, uuid4
+```
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:8` - Added uuid4 to imports
+
+**Status**: ✅ Fixed and committed (commit: 0f4c022)
+
+### ✅ **Expected Behavior After Fixes**
+
+1. **Railway Deployment**: Backend should start successfully without import errors
+2. **Garmin Connection Test**: Users can test Garmin credentials in Settings → Garmin Connect
+3. **Credential Persistence**: After successful test, credentials are saved to "Default Garmin Profile"
+4. **Connection Status**: Dashboard and Garmin settings page show "Connected" status
+5. **AI Analysis**: Users can run analysis with real Garmin data using saved credentials
+
+---
+
 ## Session: 2026-01-12 - CLI-Style Authentication Implementation
 
 ### 🔧 **Implemented CLI-Style OAuth Authentication**
