@@ -56,6 +56,23 @@ from uuid import UUID, uuid4
 
 **Status**: ✅ Fixed and committed (commit: 0f4c022)
 
+### 🐛 **Fixed Missing datetime Import**
+
+**Problem**: After fixing uuid4, another `NameError: name 'datetime' is not defined` occurred when trying to set the `target_date` field for new default profiles.
+
+**Root Cause**: The `datetime` and `timedelta` modules were not imported, but were being used in the `save-garmin-credentials` endpoint.
+
+**Solution**: Added missing datetime imports.
+```python
+# Added to imports:
+from datetime import datetime, timedelta
+```
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:9` - Added datetime and timedelta imports
+
+**Status**: ✅ Fixed and committed (commit: 53f95be)
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
