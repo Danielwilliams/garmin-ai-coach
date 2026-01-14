@@ -88,10 +88,10 @@ const GarminConnectConfig: React.FC<GarminConnectConfigProps> = ({
           isConnected: profile.garmin_is_connected,
           lastSync: profile.last_sync_date
         });
-        
-        // Pre-fill email
-        form.setValue('email', profile.garmin_email);
-        
+
+        // Don't pre-fill form - user must explicitly enter credentials
+        // This prevents confusion between app credentials and Garmin credentials
+
         if (profile.garmin_is_connected) {
           setConnectionStatus({
             status: 'success',
