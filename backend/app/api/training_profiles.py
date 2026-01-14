@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 # from sqlalchemy.orm import selectinload  # Will add relationships later
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.database.base import get_db
 from app.database.models.user import User, GarminAccount
