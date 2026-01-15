@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Railway startup script with health checks and graceful shutdown."""
+# Version: 2026-01-15 - Force rebuild for STRENGTH_TRAINING fix
 
 import os
 import uvicorn
