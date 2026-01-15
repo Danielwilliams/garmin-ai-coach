@@ -827,19 +827,19 @@ async def save_garmin_credentials(
             detail="Failed to encrypt Garmin credentials"
         )
     
-    # Look for existing default profile
+    # Look for user's existing active profile
     query = select(TrainingConfig).where(
         and_(
             TrainingConfig.user_id == current_user.id,
-            TrainingConfig.name == "Default Garmin Profile"
+            TrainingConfig.is_active == True
         )
     ).order_by(TrainingConfig.created_at.desc())
-    
+
     result = await db.execute(query)
     existing_profile = result.scalar_one_or_none()
-    
+
     if existing_profile:
-        # Update existing default profile
+        # Update existing profile with Garmin credentials
         existing_profile.garmin_email = credentials.email
         existing_profile.garmin_password_encrypted = garmin_password_encrypted
         existing_profile.garmin_is_connected = True
