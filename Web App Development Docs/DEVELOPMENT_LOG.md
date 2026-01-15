@@ -182,6 +182,26 @@ query = select(TrainingConfig).where(
 
 **Status**: ✅ Fixed and committed (commit: 0474996)
 
+### 🐛 **Fixed Dashboard Not Showing Garmin Connection Status**
+
+**Problem**: After successfully saving Garmin credentials to a profile, the dashboard didn't show the connection status. The credentials were in the database but not displayed.
+
+**Root Cause**: The API response schemas (`TrainingConfigResponse` and `TrainingProfileSummary`) didn't include Garmin-related fields like `garmin_email`, `garmin_is_connected`, and `garmin_last_sync`. Even though these fields were saved in the database, they weren't being returned in the API responses.
+
+**Solution**: Added Garmin credential fields to both response schemas.
+```python
+# TrainingConfigResponse and TrainingProfileSummary now include:
+garmin_email: Optional[str] = None
+garmin_is_connected: bool = False
+garmin_last_sync: Optional[str] = None
+```
+
+**Files Modified**:
+- `backend/app/schemas/training_profile.py:84-127` - Added Garmin fields to response schemas
+- Also added `athlete_name`, `athlete_email`, and training context fields
+
+**Status**: ✅ Fixed and committed (commit: cc66a4b)
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
