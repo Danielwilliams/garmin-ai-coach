@@ -664,6 +664,7 @@ async def test_garmin_connection(
             if extractor.authenticated and extractor.user_profile:
                 # Update connection status in database
                 training_config.garmin_is_connected = True
+                training_config.garmin_last_sync = datetime.utcnow().isoformat()
                 await db.commit()
                 
                 return {
@@ -843,6 +844,7 @@ async def save_garmin_credentials(
         existing_profile.garmin_email = credentials.email
         existing_profile.garmin_password_encrypted = garmin_password_encrypted
         existing_profile.garmin_is_connected = True
+        existing_profile.garmin_last_sync = datetime.utcnow().isoformat()
         existing_profile.athlete_name = user_display_name if user_display_name else existing_profile.athlete_name
         await db.commit()
         profile_id = existing_profile.id
@@ -869,6 +871,7 @@ async def save_garmin_credentials(
             garmin_email=credentials.email,
             garmin_password_encrypted=garmin_password_encrypted,
             garmin_is_connected=True,
+            garmin_last_sync=datetime.utcnow().isoformat(),
             is_active=True
         )
         

@@ -48,7 +48,7 @@ const GarminConnectionStatus: React.FC<GarminConnectionStatusProps> = ({
         .map((profile: any) => ({
           email: profile.garmin_email,
           isConnected: profile.garmin_is_connected || false,
-          lastSync: profile.last_sync_date,
+          lastSync: profile.garmin_last_sync,
           userDisplayName: profile.athlete_name,
           activityLevel: profile.activity_level,
           syncError: profile.sync_error,
