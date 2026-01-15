@@ -202,6 +202,68 @@ garmin_last_sync: Optional[str] = None
 
 **Status**: ✅ Fixed and committed (commit: cc66a4b)
 
+### 🐛 **Fixed Garmin API Method Names - Enables Real Data Extraction**
+
+**Problem**: Analysis was completing in seconds instead of the expected 20 minutes (like CLI). Logs showed "Failed to get daily stats: 'Garmin' object has no attribute 'get_daily_summary'" and "Limited real activity data, supplementing with mock data".
+
+**Root Cause**: The web app's data extractor was calling non-existent methods from the `garminconnect` library:
+- `get_daily_summary` (doesn't exist)
+- `get_daily_heart_rate` (doesn't exist)
+- `get_daily_sleep` (doesn't exist)
+
+**Solution**: Updated to use correct `garminconnect` API methods:
+```python
+# Before (WRONG):
+self.garmin_client.get_daily_summary(date_str)
+self.garmin_client.get_daily_heart_rate(date_str)
+self.garmin_client.get_daily_sleep(date_str)
+
+# After (CORRECT):
+self.garmin_client.get_stats(date_str)
+self.garmin_client.get_heart_rates(date_str)
+self.garmin_client.get_sleep_data(date_str)
+```
+
+**Files Modified**:
+- `backend/app/services/garmin/data_extractor.py:323,337,347` - Fixed API method names
+
+**Status**: ✅ Fixed and committed (commit: 9c70ce3)
+
+### 🐛 **Fixed Activity Type Parsing - STRENGTH_TRAINING Support**
+
+**Problem**: Logs showed "Failed to parse activity: STRENGTH_TRAINING" for all strength training activities.
+
+**Root Cause**: Activity type mapping only handled lowercase activity types, but Garmin API returns uppercase types like "STRENGTH_TRAINING".
+
+**Solution**: Added case-insensitive matching and uppercase variants:
+```python
+# Added mappings:
+'STRENGTH_TRAINING': ActivityType.STRENGTH_TRAINING,
+'RUNNING': ActivityType.RUNNING,
+'CYCLING': ActivityType.CYCLING,
+'SWIMMING': ActivityType.SWIMMING,
+
+# Plus fallback to lowercase if exact match fails
+```
+
+**Files Modified**:
+- `backend/app/services/garmin/data_extractor.py:515-540` - Enhanced activity type mapping
+
+**Status**: ✅ Fixed and committed (commit: 9c70ce3)
+
+### ⚠️ **Known Issue: 403 Forbidden on Analysis Polling**
+
+**Problem**: After starting analysis, first GET request succeeds (200 OK) but subsequent polling requests return 403 Forbidden.
+
+**Pattern Observed**:
+```
+POST /start-analysis → 201 Created ✅
+GET /analyses/{id} → 200 OK ✅ (first request)
+GET /analyses/{id} → 403 Forbidden ❌ (subsequent polls)
+```
+
+**Status**: 🔍 Under investigation - May be frontend token refresh issue during polling
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
