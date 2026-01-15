@@ -422,9 +422,14 @@ class TriathlonCoachDataExtractor:
     ) -> List[ActivitySummary]:
         """Extract activity summaries."""
         
-        logger.debug(f"Extracting activities from {start_date} to {end_date}")
-        
-        if not self.authenticated or not self.garmin_client:
+        logger.info(f"🏃 Extracting activities from {start_date} to {end_date}")
+
+        if not self.authenticated:
+            logger.warning(f"⚠️ Not authenticated, using mock data. authenticated={self.authenticated}")
+            return await self._extract_mock_activities(start_date, end_date, config)
+
+        if not self.garmin_client:
+            logger.warning(f"⚠️ No Garmin client, using mock data. garmin_client={self.garmin_client}")
             return await self._extract_mock_activities(start_date, end_date, config)
         
         try:
@@ -441,9 +446,13 @@ class TriathlonCoachDataExtractor:
                 0,  # start index
                 limit  # limit
             )
-            
+
+            logger.info(f"📥 Fetched {len(raw_activities)} raw activities from Garmin API (limit={limit}, days={days_range})")
+
             activities = []
-            
+            skipped_date_range = 0
+            failed_parse = 0
+
             for raw_activity in raw_activities:
                 try:
                     # Parse activity start time
@@ -457,6 +466,7 @@ class TriathlonCoachDataExtractor:
                     
                     # Check if activity is within our date range
                     if not (start_date <= activity_date <= end_date):
+                        skipped_date_range += 1
                         continue
                     
                     # Map Garmin activity type to our enum
@@ -501,10 +511,12 @@ class TriathlonCoachDataExtractor:
                     activities.append(activity)
                     
                 except Exception as e:
+                    failed_parse += 1
                     logger.warning(f"Failed to parse activity: {e}")
                     continue
-            
-            logger.info(f"Extracted {len(activities)} real activities from Garmin Connect")
+
+            logger.info(f"✅ Extracted {len(activities)} real activities from Garmin Connect")
+            logger.info(f"📊 Activity stats: {len(raw_activities)} fetched, {skipped_date_range} outside date range, {failed_parse} failed to parse, {len(activities)} successfully extracted")
             
             # If we don't have enough real data, supplement with mock data
             if len(activities) < 5:
@@ -515,7 +527,9 @@ class TriathlonCoachDataExtractor:
             return activities
             
         except Exception as e:
-            logger.error(f"Failed to extract real activities: {e}")
+            logger.error(f"❌ Failed to extract real activities: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return await self._extract_mock_activities(start_date, end_date, config)
     
     def _map_garmin_activity_type(self, garmin_type: str) -> ActivityType:
