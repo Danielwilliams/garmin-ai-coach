@@ -227,19 +227,23 @@ class TriathlonCoachDataExtractor:
         return True
     
     async def extract_complete_data(
-        self, 
+        self,
         config: ExtractionConfig = None
     ) -> GarminData:
         """Extract complete training data from Garmin Connect.
-        
+
         This is the main method that replicates the CLI's data extraction.
         """
-        
+
+        print(f"[DATA EXTRACTION] extract_complete_data called. authenticated={self.authenticated}")
+
         if not self.authenticated:
+            print(f"[DATA EXTRACTION] ERROR - Not authenticated, raising exception")
             raise GarminConnectError("Not authenticated with Garmin Connect")
-        
+
         config = config or ExtractionConfig()
-        
+
+        print(f"[DATA EXTRACTION] Config: activities_days={config.activities_days}, metrics_days={config.metrics_days}")
         logger.info(f"Starting data extraction: {config.activities_days} activity days, {config.metrics_days} metric days")
         
         # Calculate date ranges
@@ -422,15 +426,22 @@ class TriathlonCoachDataExtractor:
     ) -> List[ActivitySummary]:
         """Extract activity summaries."""
         
+        print(f"[ACTIVITY EXTRACTION] Starting: {start_date} to {end_date}")
         logger.info(f"🏃 Extracting activities from {start_date} to {end_date}")
 
+        print(f"[ACTIVITY EXTRACTION] Auth check: authenticated={self.authenticated}, client={self.garmin_client is not None}")
+
         if not self.authenticated:
+            print(f"[ACTIVITY EXTRACTION] USING MOCK DATA - Not authenticated")
             logger.warning(f"⚠️ Not authenticated, using mock data. authenticated={self.authenticated}")
             return await self._extract_mock_activities(start_date, end_date, config)
 
         if not self.garmin_client:
+            print(f"[ACTIVITY EXTRACTION] USING MOCK DATA - No client")
             logger.warning(f"⚠️ No Garmin client, using mock data. garmin_client={self.garmin_client}")
             return await self._extract_mock_activities(start_date, end_date, config)
+
+        print(f"[ACTIVITY EXTRACTION] Proceeding with real Garmin data fetch")
         
         try:
             loop = asyncio.get_event_loop()
@@ -867,26 +878,34 @@ class TriathlonCoachDataExtractor:
 
 
 async def extract_garmin_data(
-    email: str, 
+    email: str,
     password: str,
     config: ExtractionConfig = None
 ) -> GarminData:
     """Main function to extract Garmin Connect data.
-    
+
     This is the primary interface for data extraction that matches
     the CLI's extraction function signature.
     """
-    
+
+    print(f"[EXTRACT_GARMIN_DATA] Called with email={email[:20]}...")
     config = config or ExtractionConfig()
-    
+
     try:
+        print(f"[EXTRACT_GARMIN_DATA] Creating TriathlonCoachDataExtractor")
         async with TriathlonCoachDataExtractor(email, password) as extractor:
+            print(f"[EXTRACT_GARMIN_DATA] Extractor created. authenticated={extractor.authenticated}")
             if extractor.authenticated:
+                print(f"[EXTRACT_GARMIN_DATA] Authentication SUCCESS - calling extract_complete_data")
                 return await extractor.extract_complete_data(config)
             else:
+                print(f"[EXTRACT_GARMIN_DATA] Authentication FAILED - using mock data")
                 logger.warning("Authentication failed: falling back to mock data")
                 return await _generate_mock_data(config)
     except Exception as e:
+        print(f"[EXTRACT_GARMIN_DATA] EXCEPTION: {e}")
+        import traceback
+        print(f"[EXTRACT_GARMIN_DATA] Traceback: {traceback.format_exc()}")
         logger.error(f"Garmin data extraction failed: {e}")
         logger.info("Falling back to mock data due to authentication failure")
         return await _generate_mock_data(config)
