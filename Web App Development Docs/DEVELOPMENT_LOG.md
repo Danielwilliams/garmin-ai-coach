@@ -107,6 +107,27 @@ form.setValue('email', profile.garmin_email);  // Auto-filled from profile
 
 **Status**: ✅ Fixed and committed (commit: 121d041)
 
+### 🐛 **Fixed TrainingZone Value Type Mismatch**
+
+**Problem**: `DBAPIError: invalid input for query argument $4: 120 (expected str, got int)` when creating default training zones.
+
+**Root Cause**: The TrainingZone `value` field is defined as VARCHAR in the database, but default zone values were integers (120, 200, 300).
+
+**Solution**: Converted all zone values to strings in both the default data and during TrainingZone creation.
+```python
+# Before:
+{"discipline": "swimming", "metric": "pace", "value": 120}
+
+# After:
+{"discipline": "swimming", "metric": "pace", "value": "120"}
+value=str(zone_data["value"])  # Ensure value is string
+```
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:880-892` - Fixed zone value types
+
+**Status**: ✅ Fixed and committed (commit: b971761)
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
