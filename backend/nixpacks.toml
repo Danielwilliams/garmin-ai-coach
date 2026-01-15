@@ -2,7 +2,11 @@
 dependsOn = ["install"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+  "find . -type d -name '__pycache__' -exec rm -rf {} + || true",
+  "find . -type f -name '*.pyc' -delete || true",
+  "pip install --no-cache-dir -r requirements.txt"
+]
 
 [start]
 cmd = "python start.py"

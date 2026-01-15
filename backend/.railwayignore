@@ -1,0 +1,6 @@
+# Ignore Python cache files during Railway builds
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
