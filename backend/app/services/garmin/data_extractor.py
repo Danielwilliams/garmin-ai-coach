@@ -461,11 +461,12 @@ class TriathlonCoachDataExtractor:
                     activity_type = self._map_garmin_activity_type(garmin_type)
                     
                     # Extract activity metrics
-                    duration_seconds = raw_activity.get('duration', 0)
+                    # Garmin returns duration as float, convert to int for our model
+                    duration_seconds = int(raw_activity.get('duration', 0))
                     distance_meters = raw_activity.get('distance', 0.0)
-                    calories = raw_activity.get('calories', 0)
-                    avg_hr = raw_activity.get('averageHR')
-                    max_hr = raw_activity.get('maxHR')
+                    calories = int(raw_activity.get('calories', 0)) if raw_activity.get('calories') else None
+                    avg_hr = int(raw_activity.get('averageHR')) if raw_activity.get('averageHR') else None
+                    max_hr = int(raw_activity.get('maxHR')) if raw_activity.get('maxHR') else None
                     avg_speed = raw_activity.get('averageSpeed')
                     
                     # Calculate training stress score if available
