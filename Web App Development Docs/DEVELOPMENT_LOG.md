@@ -148,6 +148,40 @@ value=str(zone_data["value"])  # Ensure value is string
 
 **Status**: ✅ Fixed and committed (commit: 2ac8b81)
 
+### 🐛 **Fixed Duplicate Profile Creation**
+
+**Problem**: The `save-garmin-credentials` endpoint was creating a brand new TrainingConfig profile called "Default Garmin Profile" instead of updating the user's existing profile with Garmin credentials.
+
+**Root Cause**: The endpoint was specifically looking for a profile named "Default Garmin Profile" and creating a new one if not found, rather than updating the user's actual existing profile.
+
+**Solution**: Changed logic to find and update the user's existing active profile.
+```python
+# Before:
+query = select(TrainingConfig).where(
+    and_(
+        TrainingConfig.user_id == current_user.id,
+        TrainingConfig.name == "Default Garmin Profile"  # Too specific!
+    )
+)
+
+# After:
+query = select(TrainingConfig).where(
+    and_(
+        TrainingConfig.user_id == current_user.id,
+        TrainingConfig.is_active == True  # Find ANY active profile
+    )
+)
+```
+
+**Behavior**:
+- If user has an existing profile → Update it with Garmin credentials
+- If user has NO profiles → Create new "Default Garmin Profile"
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:830-848` - Fixed profile lookup logic
+
+**Status**: ✅ Fixed and committed (commit: 0474996)
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
