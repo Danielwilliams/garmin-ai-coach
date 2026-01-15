@@ -84,16 +84,23 @@ class TrainingConfigUpdate(BaseModel):
 class TrainingConfigResponse(BaseModel):
     """Schema for training configuration response."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     user_id: UUID
     name: str
     is_active: bool
-    
+
+    # Athlete information
+    athlete_name: Optional[str] = None
+    athlete_email: Optional[str] = None
+
     # Context
     analysis_context: Optional[str]
     planning_context: Optional[str]
-    
+    training_needs: Optional[str] = None
+    session_constraints: Optional[str] = None
+    training_preferences: Optional[str] = None
+
     # Settings
     activities_days: int
     metrics_days: int
@@ -102,11 +109,16 @@ class TrainingConfigResponse(BaseModel):
     hitl_enabled: bool
     skip_synthesis: bool
     output_directory: str
-    
+
+    # Garmin Connect credentials (email only, password is encrypted)
+    garmin_email: Optional[str] = None
+    garmin_is_connected: bool = False
+    garmin_last_sync: Optional[str] = None
+
     # Timestamps
     created_at: datetime
     updated_at: datetime
-    
+
     # Related data (loaded separately)
     training_zones: List[TrainingZoneResponse] = Field(default_factory=list)
     competitions: List[CompetitionResponse] = Field(default_factory=list)
@@ -115,13 +127,20 @@ class TrainingConfigResponse(BaseModel):
 class TrainingProfileSummary(BaseModel):
     """Schema for training profile list view."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     name: str
     is_active: bool
+    athlete_name: Optional[str] = None
     competitions_count: int = 0
     zones_count: int = 0
     ai_mode: str
+
+    # Garmin connection status
+    garmin_email: Optional[str] = None
+    garmin_is_connected: bool = False
+    garmin_last_sync: Optional[str] = None
+
     created_at: datetime
     updated_at: datetime
 
