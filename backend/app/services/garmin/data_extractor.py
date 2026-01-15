@@ -318,9 +318,10 @@ class TriathlonCoachDataExtractor:
                     date_str = current_date.strftime('%Y-%m-%d')
                     
                     # Get daily summary data
+                    # Note: garminconnect doesn't have get_daily_summary, using get_stats instead
                     daily_summary = await loop.run_in_executor(
-                        None, 
-                        self.garmin_client.get_daily_summary, 
+                        None,
+                        self.garmin_client.get_stats,
                         date_str
                     )
                     
@@ -336,10 +337,10 @@ class TriathlonCoachDataExtractor:
                     try:
                         hr_data = await loop.run_in_executor(
                             None,
-                            self.garmin_client.get_daily_heart_rate,
+                            self.garmin_client.get_heart_rates,
                             date_str
                         )
-                        resting_hr = hr_data.get('restingHeartRate')
+                        resting_hr = hr_data.get('restingHeartRate') if hr_data else None
                     except Exception as e:
                         logger.debug(f"Could not get heart rate data for {date_str}: {e}")
                     
@@ -348,11 +349,12 @@ class TriathlonCoachDataExtractor:
                     try:
                         sleep_data = await loop.run_in_executor(
                             None,
-                            self.garmin_client.get_daily_sleep,
+                            self.garmin_client.get_sleep_data,
                             date_str
                         )
-                        sleep_minutes = sleep_data.get('sleepTimeSeconds', 0) / 60
-                        sleep_hours = sleep_minutes / 60 if sleep_minutes > 0 else None
+                        if sleep_data:
+                            sleep_minutes = sleep_data.get('sleepTimeSeconds', 0) / 60
+                            sleep_hours = sleep_minutes / 60 if sleep_minutes > 0 else None
                     except Exception as e:
                         logger.debug(f"Could not get sleep data for {date_str}: {e}")
                     
@@ -514,7 +516,8 @@ class TriathlonCoachDataExtractor:
     
     def _map_garmin_activity_type(self, garmin_type: str) -> ActivityType:
         """Map Garmin activity type to our ActivityType enum."""
-        
+
+        # Garmin uses UPPERCASE_UNDERSCORE format for activity types
         type_mapping = {
             'running': ActivityType.RUNNING,
             'cycling': ActivityType.CYCLING,
@@ -526,10 +529,20 @@ class TriathlonCoachDataExtractor:
             'triathlon': ActivityType.TRIATHLON,
             'strength_training': ActivityType.STRENGTH_TRAINING,
             'gym': ActivityType.STRENGTH_TRAINING,
-            'other': ActivityType.OTHER
+            'other': ActivityType.OTHER,
+            # Additional uppercase variants from Garmin API
+            'STRENGTH_TRAINING': ActivityType.STRENGTH_TRAINING,
+            'RUNNING': ActivityType.RUNNING,
+            'CYCLING': ActivityType.CYCLING,
+            'SWIMMING': ActivityType.SWIMMING,
         }
-        
-        return type_mapping.get(garmin_type.lower(), ActivityType.OTHER)
+
+        # Try exact match first, then lowercase
+        result = type_mapping.get(garmin_type)
+        if result is None:
+            result = type_mapping.get(garmin_type.lower(), ActivityType.OTHER)
+
+        return result
     
     def _estimate_tss_from_hr(self, avg_hr: int, duration_seconds: int) -> float:
         """Estimate Training Stress Score from heart rate and duration."""
