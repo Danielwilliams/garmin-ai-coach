@@ -326,11 +326,14 @@ class TriathlonCoachDataExtractor:
                     )
                     
                     # Extract stats from daily summary
-                    steps = daily_summary.get('totalSteps', 0)
-                    distance_meters = daily_summary.get('totalDistanceMeters', 0.0)
-                    active_calories = daily_summary.get('activeKilocalories', 0)
-                    bmr_calories = daily_summary.get('bmrKilocalories', 1600)
-                    active_minutes = daily_summary.get('moderateIntensityMinutes', 0) + daily_summary.get('vigorousIntensityMinutes', 0)
+                    # Handle None values explicitly since .get() returns None if key exists with None value
+                    steps = daily_summary.get('totalSteps') or 0
+                    distance_meters = daily_summary.get('totalDistanceMeters') or 0.0
+                    active_calories = daily_summary.get('activeKilocalories') or 0
+                    bmr_calories = daily_summary.get('bmrKilocalories') or 1600
+                    moderate_mins = daily_summary.get('moderateIntensityMinutes') or 0
+                    vigorous_mins = daily_summary.get('vigorousIntensityMinutes') or 0
+                    active_minutes = moderate_mins + vigorous_mins
                     
                     # Get heart rate data
                     resting_hr = None
