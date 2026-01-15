@@ -101,9 +101,13 @@ async def list_training_profiles(
                 id=profile.id,
                 name=profile.name,
                 is_active=profile.is_active,
+                athlete_name=profile.athlete_name,
                 competitions_count=comp_count,
                 zones_count=zones_count,
                 ai_mode=profile.ai_mode,
+                garmin_email=profile.garmin_email,
+                garmin_is_connected=profile.garmin_is_connected,
+                garmin_last_sync=profile.garmin_last_sync,
                 created_at=profile.created_at,
                 updated_at=profile.updated_at
             ))
