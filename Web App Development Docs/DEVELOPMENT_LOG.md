@@ -128,6 +128,26 @@ value=str(zone_data["value"])  # Ensure value is string
 
 **Status**: ✅ Fixed and committed (commit: b971761)
 
+### 🐛 **Fixed TrainingZone Discipline Capitalization**
+
+**Problem**: `IntegrityError: new row for relation "trainingzone" violates check constraint "ck_trainingzone_discipline"` when creating default training zones.
+
+**Root Cause**: Database migration `20260110_1245_001_add_training_zone_table.py` defines a check constraint that only allows capitalized discipline names: `'Running'`, `'Cycling'`, `'Swimming'`. Code was using lowercase values: `'swimming'`, `'cycling'`, `'running'`.
+
+**Solution**: Changed discipline values to match database constraint (capitalized).
+```python
+# Before:
+{"discipline": "swimming", "metric": "pace", "value": "120"}
+
+# After:
+{"discipline": "Swimming", "metric": "pace", "value": "120"}
+```
+
+**Files Modified**:
+- `backend/app/api/training_profiles.py:880-885` - Capitalized discipline values
+
+**Status**: ✅ Fixed and committed (commit: 2ac8b81)
+
 ### ✅ **Expected Behavior After Fixes**
 
 1. **Railway Deployment**: Backend should start successfully without import errors
