@@ -211,6 +211,12 @@ class AnalysisEngine:
                 }
             
             # Convert to dictionary including Garmin credentials
+            print(f"[ANALYSIS_ENGINE] Loaded TrainingConfig from DB:")
+            print(f"  - athlete_email: {config.athlete_email}")
+            print(f"  - garmin_email: {config.garmin_email}")
+            print(f"  - garmin_password_encrypted: {'SET' if config.garmin_password_encrypted else 'NULL'}")
+            print(f"  - garmin_is_connected: {config.garmin_is_connected}")
+
             return {
                 "id": str(config.id),
                 "name": config.name,

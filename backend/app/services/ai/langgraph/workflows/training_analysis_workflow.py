@@ -143,6 +143,11 @@ class TrainingAnalysisWorkflow:
             # Get Garmin credentials from training config or use mock data
             garmin_email = training_config.get("garmin_email")
             garmin_password = training_config.get("garmin_password_encrypted")
+
+            print(f"[WORKFLOW] training_config keys: {list(training_config.keys())}")
+            print(f"[WORKFLOW] garmin_email from config: {garmin_email}")
+            print(f"[WORKFLOW] athlete_email from config: {training_config.get('athlete_email')}")
+            print(f"[WORKFLOW] has garmin_password_encrypted: {bool(garmin_password)}")
             
             # Check if we have real credentials
             has_real_credentials = garmin_email and garmin_password and garmin_email != "mock_user@example.com"
