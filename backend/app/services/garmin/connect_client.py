@@ -137,16 +137,15 @@ class GarminConnectClient:
         return self._client
     
     async def disconnect(self) -> None:
-        """Disconnect from Garmin Connect."""
+        """Disconnect from Garmin Connect.
+
+        Note: The logout() method is deprecated. We simply clean up the client
+        reference and let tokens expire naturally. This matches the recommended
+        approach from the garminconnect library.
+        """
         if self._client:
-            try:
-                await asyncio.get_event_loop().run_in_executor(
-                    None, self._client.logout
-                )
-            except Exception as e:
-                logger.warning(f"Error during logout: {e}")
-            finally:
-                self._client = None
+            # Simply clear the client reference - tokens will expire naturally
+            self._client = None
     
     @property
     def is_connected(self) -> bool:
