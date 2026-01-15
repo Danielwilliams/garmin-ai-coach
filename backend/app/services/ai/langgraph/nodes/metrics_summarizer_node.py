@@ -229,8 +229,12 @@ Be thorough but concise. Focus on patterns that will inform subsequent expert an
         
         # Calculate aggregate metrics
         total_activities = len(activities)
-        avg_tss = sum(a.get('training_stress_score', 0) for a in activities) / total_activities if total_activities > 0 else 0
-        avg_hr = sum(a.get('average_heart_rate', 0) for a in activities if a.get('average_heart_rate')) / max(1, len([a for a in activities if a.get('average_heart_rate')]))
+        # Filter out None values when summing
+        tss_values = [a.get('training_stress_score') or 0 for a in activities]
+        avg_tss = sum(tss_values) / total_activities if total_activities > 0 else 0
+
+        hr_values = [a.get('average_heart_rate') for a in activities if a.get('average_heart_rate')]
+        avg_hr = sum(hr_values) / len(hr_values) if hr_values else 0
         
         # Activity type distribution
         activity_types = {}
@@ -250,7 +254,9 @@ Be thorough but concise. Focus on patterns that will inform subsequent expert an
         # Recent trend (last 7 activities)
         recent_activities = activities[-7:] if len(activities) >= 7 else activities
         if recent_activities:
-            recent_tss = sum(a.get('training_stress_score', 0) for a in recent_activities) / len(recent_activities)
+            # Filter out None values when calculating recent TSS
+            recent_tss_values = [a.get('training_stress_score') or 0 for a in recent_activities]
+            recent_tss = sum(recent_tss_values) / len(recent_tss_values) if recent_tss_values else 0
             parts.append(f"Recent TSS Trend: {recent_tss:.1f}")
         
         return "\n".join(parts)
