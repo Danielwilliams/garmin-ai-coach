@@ -877,10 +877,11 @@ async def save_garmin_credentials(
         profile_id = default_profile.id
         
         # Create default training zones
+        # Note: discipline must be capitalized to match database constraint
         default_zones = [
-            {"discipline": "swimming", "metric": "pace", "value": "120"},  # 2:00/100m
-            {"discipline": "cycling", "metric": "power", "value": "200"},   # 200W
-            {"discipline": "running", "metric": "pace", "value": "300"}     # 5:00/km
+            {"discipline": "Swimming", "metric": "pace", "value": "120"},  # 2:00/100m
+            {"discipline": "Cycling", "metric": "power", "value": "200"},   # 200W
+            {"discipline": "Running", "metric": "pace", "value": "300"}     # 5:00/km
         ]
 
         for zone_data in default_zones:
